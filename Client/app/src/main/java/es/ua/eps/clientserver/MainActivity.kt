@@ -11,6 +11,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.net.InetAddress
+import java.net.Socket
 
 class MainActivity : AppCompatActivity() {
     lateinit var viewBinding : ActivityMainBinding
@@ -21,7 +22,12 @@ class MainActivity : AppCompatActivity() {
     lateinit var editTextPort: EditText
 
     lateinit var buttonConnect : Button
-    lateinit var buttonClear : Button
+    lateinit var buttonDisconnet : Button
+
+    lateinit var messageText : EditText
+    lateinit var buttonSendMessage : Button
+
+    lateinit var myClient :Client
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -35,22 +41,41 @@ class MainActivity : AppCompatActivity() {
         editTextPort = viewBinding.editTextPort
 
         buttonConnect = viewBinding.buttonConnect
-        buttonClear = viewBinding.buttonClear
+        buttonDisconnet = viewBinding.buttonDisconnect
+
+        messageText = viewBinding.messageText
+        buttonSendMessage = viewBinding.sendMessageButton
+
+        editTextAddress.setText("192.168.1.46")
+        editTextPort.setText("8080")
+
+        myClient = Client(response, viewBinding)
+
 
         buttonConnect.setOnClickListener{
-            val myClient = Client(editTextAddress.text.toString(), editTextPort.text    .toString().toInt(), response)
+            if (editTextAddress.text.toString() !="" && editTextPort.text.toString() != "")
+            {
+                myClient.setAddress(editTextAddress.text.toString())
+                myClient.setPort(editTextPort.text.toString().toInt())
+                lifecycleScope.launch(Dispatchers.IO){
+                    myClient.connectClientToServer()
 
-            lifecycleScope.launch(Dispatchers.IO){
-                myClient.connectClientToServer()
-
-                withContext(Dispatchers.Main){
-                    myClient.writeResponse()
+                    withContext(Dispatchers.Main) {
+                        myClient.writeResponse()
+                    }
                 }
             }
         }
 
-        buttonClear.setOnClickListener{
-            response.text =""
+        buttonDisconnet.setOnClickListener{
+            myClient.closeComunication()
+            myClient.writeResponse()
+        }
+
+        buttonSendMessage.setOnClickListener{
+            lifecycleScope.launch(Dispatchers.IO) {
+                myClient.sendMessageToServer("CHACHO QUE FUNCIONA")
+            }
         }
     }
 }
