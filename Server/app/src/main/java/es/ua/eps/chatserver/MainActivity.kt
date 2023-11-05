@@ -12,6 +12,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.BufferedReader
+import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.InputStreamReader
 import java.io.OutputStream
@@ -88,12 +89,7 @@ class MainActivity : AppCompatActivity() {
                     if(isActive) {
                         while(true)
                         {
-                            withContext(Dispatchers.Main) {
-                              //  message += "Listen\n"
-                               // serverInfo_text.text = message
-                                readMessages()
-
-                            }
+                            readMessages()
                         }
                     }
                 }
@@ -137,9 +133,6 @@ class MainActivity : AppCompatActivity() {
                     while (true) {
                         val socket = serverSocket!!.accept()
 
-                        if (clients.contains(socket)){
-                            message += "USER IN SERVER BEFORE\n"
-                        }
                         count++
                         message += """"#$count from ${socket.inetAddress}:${socket.port}"""
 
@@ -148,7 +141,8 @@ class MainActivity : AppCompatActivity() {
                             serverInfo_text.text = message
                         }
 
-                        socketServerReplyThread(socket, count)
+                            socketServerReplyThread(socket, count, null)
+
                         clients.add(socket)
 
                         withContext(Dispatchers.Main) {
@@ -164,58 +158,107 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    suspend fun socketServerReplyThread (hostThreadSocket: Socket, cnt: Int){
+    suspend fun socketServerReplyThread (hostThreadSocket: Socket, cnt: Int, respon : String?){
         val outputStream: OutputStream
-            val msgReply = "Hello from Pepe, you are #$cnt \n"
+        var msgReply = ""
+        if(respon != null) msgReply = "$respon"
+        else  msgReply = "Hello from Pepe, you are #$cnt \n"
+        try {
+            outputStream = hostThreadSocket.getOutputStream()
+            val printWriter = PrintWriter(outputStream)
+            printWriter.write(msgReply)
+            printWriter.flush()
+
+            message += "replayed: $msgReply\n"
+
+
+        /*    val byteArrayOutputStream = ByteArrayOutputStream(1024)
+            val buffer = ByteArray(1024)
+            var bytesRead : Int
+
+           val inputStream = hostThreadSocket.getInputStream()
+
+            while (inputStream.read(buffer).also {bytesRead = it} != -1){
+                byteArrayOutputStream.write(buffer, 0, bytesRead)
+                message += byteArrayOutputStream.toString("UTF-8")
+
+            }
+            printStream.close()
+            */
+        } catch (e: IOException) {
+            // TODO Auto-generated catch block
+            e.printStackTrace()
+            message += "Something wrong! $e\n"
+        }
+
+        withContext(Dispatchers.Main) {
+            serverInfo_text.text = message
+
+        }
+    }
+
+
+   /* suspend fun sendMessage(clientReciverSocket : Socket, msn : String)
+    {
+        if (!clientReciverSocket.isClosed) {
+            val outputStream: OutputStream
             try {
-                outputStream = hostThreadSocket.getOutputStream()
+                outputStream = clientReciverSocket.getOutputStream()
                 val printWriter = PrintWriter(outputStream)
-                printWriter.write(msgReply)
+                printWriter.write(msn)
                 printWriter.flush()
-
-                message += "replayed: $msgReply\n"
-
-
-            /*    val byteArrayOutputStream = ByteArrayOutputStream(1024)
-                val buffer = ByteArray(1024)
-                var bytesRead : Int
-
-               val inputStream = hostThreadSocket.getInputStream()
-
-                while (inputStream.read(buffer).also {bytesRead = it} != -1){
-                    byteArrayOutputStream.write(buffer, 0, bytesRead)
-                    message += byteArrayOutputStream.toString("UTF-8")
-
-                }
-                printStream.close()
-                */
             } catch (e: IOException) {
                 // TODO Auto-generated catch block
                 e.printStackTrace()
-                message += "Something wrong! $e\n"
-            }
-
-            withContext(Dispatchers.Main) {
-                serverInfo_text.text = message
-
             }
         }
-
-
+    }
+*/
 
     suspend fun readMessages(){
-        for(socket in clients) {
-            var reader: BufferedReader = BufferedReader(InputStreamReader(socket.getInputStream()))
+        withContext(Dispatchers.IO) {
 
-            var line = withContext(Dispatchers.IO) {
-                reader.readLine()
+            for (socket in clients) {
+                val byteArrayOutputStream = ByteArrayOutputStream(1024)
+                val buffer = ByteArray(1024)
+                var bytesRead : Int
+                val inputStream = socket.getInputStream()
+                var response = ""
+
+                while (true) {
+                    bytesRead = inputStream.read(buffer)
+                    if (bytesRead == -1)
+                        break
+                    byteArrayOutputStream.write(buffer, 0, bytesRead)
+                    response += byteArrayOutputStream.toString("UTF-8")
+
+                    socketServerReplyThread(socket, 9999999, response)
+                    response = ""
+                    byteArrayOutputStream.reset()
+                }
+
+
             }
 
-            withContext(Dispatchers.Main) {
-                serverInfo_text.text = line
+/*
+            for (socket in clients) {
+                if (!socket.isClosed) {
+                    var reader: BufferedReader =
+                        BufferedReader(InputStreamReader(socket.getInputStream()))
 
-            }
+                    var line = withContext(Dispatchers.IO) {
+                        reader.readLine()
+                    }
 
+                    socketServerReplyThread(socket, 9999999)
+                    // sendMessage(socket, line)
+
+                    withContext(Dispatchers.Main) {
+                        serverInfo_text.text = line
+
+                    }
+                }
+            }*/
         }
         /* withContext(Dispatchers.IO) {
                 while(true)

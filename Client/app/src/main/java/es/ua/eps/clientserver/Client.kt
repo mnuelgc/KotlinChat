@@ -110,9 +110,13 @@ class Client internal constructor(
                         byteArrayOutputStream.write(buffer, 0, bytesRead)
                         response += byteArrayOutputStream.toString("UTF-8")
 
-                        withContext(Dispatchers.Main){ writeResponse()}
-
+                        withContext(Dispatchers.Main){
+                            writeResponse()
+                            response = ""
                         }
+
+
+                    }
 
                 } catch (ex: UnknownHostException) {
                     ex.printStackTrace()
@@ -126,7 +130,7 @@ class Client internal constructor(
     suspend fun sendMessageToServer(message: String){
         if (isConnectedToServer) {
             val writer: PrintWriter = PrintWriter(socket!!.getOutputStream(), true)
-            writer.println (message + "\n")
+            writer.println (message)
             writer.flush()
         }
     }
@@ -172,7 +176,6 @@ class Client internal constructor(
         {
             response = "Disconnected From Server"
             isConnectedToServer = false
-            socket?.shutdownOutput()
             socket?.close()
             socket = null
         }

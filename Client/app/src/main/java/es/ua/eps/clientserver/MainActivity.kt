@@ -74,7 +74,7 @@ class MainActivity : AppCompatActivity() {
 
         buttonSendMessage.setOnClickListener{
             lifecycleScope.launch(Dispatchers.IO) {
-                myClient.sendMessageToServer("CHACHO QUE FUNCIONA")
+                myClient.sendMessageToServer(" CHACHO QUE FUNCIONA")
             }
         }
     }
