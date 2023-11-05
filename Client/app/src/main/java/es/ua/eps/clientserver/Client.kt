@@ -16,10 +16,11 @@ import java.net.Socket
 import java.net.UnknownHostException
 
 class Client internal constructor(
-
     var textResponse : TextView,
     var viewBinding: ActivityMainBinding
 ){
+    val DISCONNECT_CODE : Int = 1616
+
     var dstAddress =""
     var dsPort = 0
 
@@ -135,6 +136,12 @@ class Client internal constructor(
         }
     }
 
+    suspend fun notifyServerClose()
+    {
+        sendMessageToServer(DISCONNECT_CODE.toString())
+        isConnectedToServer = false
+    }
+
          /*   try {
 /*
                 socket!!.outputStream.write("Hello from the client!".toByteArray());
@@ -158,26 +165,30 @@ class Client internal constructor(
    //     }
     //}
 
-    fun writeResponse(){
-        textResponse.text = response
+    suspend fun writeResponse(){
+        withContext(Dispatchers.Main) {
+            textResponse.text = response
 
-        if (isConnectedToServer) {
-            viewBinding.root.setBackgroundColor(Color.GREEN)
-        }else{
-            viewBinding.root.setBackgroundColor(Color.YELLOW)
+            if (isConnectedToServer) {
+                viewBinding.root.setBackgroundColor(Color.GREEN)
+            } else {
+                viewBinding.root.setBackgroundColor(Color.YELLOW)
+            }
         }
 
     }
 
 
-    fun closeComunication()
+    suspend fun closeComunication()
     {
         if (isConnectedToServer)
         {
             response = "Disconnected From Server"
-            isConnectedToServer = false
-            socket?.close()
-            socket = null
+            notifyServerClose()
+            withContext(Dispatchers.IO) {
+                socket?.close()
+                socket = null
+            }
         }
     }
 

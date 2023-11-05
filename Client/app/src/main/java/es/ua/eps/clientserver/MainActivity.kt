@@ -59,22 +59,20 @@ class MainActivity : AppCompatActivity() {
                 myClient.setPort(editTextPort.text.toString().toInt())
                 lifecycleScope.launch(Dispatchers.IO){
                     myClient.connectClientToServer()
-
-                    withContext(Dispatchers.Main) {
-                        myClient.writeResponse()
-                    }
                 }
             }
         }
 
         buttonDisconnet.setOnClickListener{
-            myClient.closeComunication()
-            myClient.writeResponse()
+            lifecycleScope.launch(Dispatchers.IO) {
+                myClient.closeComunication()
+                myClient.writeResponse()
+            }
         }
 
         buttonSendMessage.setOnClickListener{
             lifecycleScope.launch(Dispatchers.IO) {
-                myClient.sendMessageToServer(" CHACHO QUE FUNCIONA")
+                myClient.sendMessageToServer("CHACHO QUE FUNCIONA")
             }
         }
     }

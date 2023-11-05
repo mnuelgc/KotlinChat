@@ -23,7 +23,6 @@ import java.net.Socket
 import java.net.SocketException
 
 class MainActivity : AppCompatActivity() {
-    val SocketServerPORT = 8080
 
     private lateinit var viewBinding: ActivityMainBinding
     private lateinit var launchServer_button: Button
@@ -32,17 +31,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var serverIp_text: TextView
     private lateinit var serverInfo_text: TextView
 
-    private lateinit var serverSocket: ServerSocket
     private var startServerCorroutine: Job? = null
     private var listenMessagesServerCorroutine: Job? = null
 
-    var count = 0
-
-    var serverRunning = false
-    var message : String? = ""
-
-    var clients : ArrayList <Socket> = ArrayList<Socket>()
-
+    lateinit var  server: Server
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         viewBinding = ActivityMainBinding.inflate(layoutInflater)
@@ -56,312 +48,40 @@ class MainActivity : AppCompatActivity() {
         serverIp_text = viewBinding.ServerIp
         serverInfo_text = viewBinding.ServerInfo
 
-
-        /* socketServerThread = Thread(SocketServerThread)
-        socketServerThread.start()
-*/
-
-
-      /*  serverCorroutine = lifecycleScope.launch(Dispatchers.IO)
-        {
-            if (isActive) {
-                initSocket()
-            }
-               lifecycleScope.launch(Dispatchers.Main)
-                {
-                    serverInfo_text.text = ("aaaaa " )
-                }
-
-        }
-        */
+        server = Server(serverIp_text, serverInfo_text, serverPort_text)
 
         launchServer_button.setOnClickListener {
             startServerCorroutine = lifecycleScope.launch(Dispatchers.IO)
             {
                 if (isActive) {
-                    initSocket()
+                    server.initSocket()
                 }
             }
 
-            if (startServerCorroutine!!.isActive)
-            {
-                listenMessagesServerCorroutine = lifecycleScope.launch(Dispatchers.IO){
-                    if(isActive) {
-                        while(true)
-                        {
-                            readMessages()
+            if (startServerCorroutine!!.isActive) {
+                listenMessagesServerCorroutine = lifecycleScope.launch(Dispatchers.IO) {
+                    if (isActive) {
+                        while (true) {
+                            server.readMessages()
                         }
                     }
                 }
             }
-
-
-
-            //     launchServer()
         }
 
-        stopServer_button.setOnClickListener{
-            closeServer()
-        }
+        stopServer_button.setOnClickListener {
 
+            startServerCorroutine?.cancel()
+            server.closeServer()
+            listenMessagesServerCorroutine?.cancel()
+        }
     }
-
 
     protected override fun onDestroy() {
         super.onDestroy()
-        closeServer()
-    }
-
-    suspend fun initSocket() {
-    if (!serverRunning)
-    {
-        try {
-                withContext(Dispatchers.IO) {
-                    serverSocket =
-                        ServerSocket(SocketServerPORT)
-
-                    withContext(Dispatchers.Main) {
-                        serverIp_text.text = getIpAddress()
-
-                        serverPort_text.text = ("I'm waiting here: "
-                                + serverSocket.localPort)
-                     //  serverInfo_text.text = ""
-
-                    }
-                    serverRunning = true
-                    count = 0
-                    while (true) {
-                        val socket = serverSocket!!.accept()
-
-                        count++
-                        message += """"#$count from ${socket.inetAddress}:${socket.port}"""
-
-
-                        withContext(Dispatchers.Main) {
-                            serverInfo_text.text = message
-                        }
-
-                            socketServerReplyThread(socket, count, null)
-
-                        clients.add(socket)
-
-                        withContext(Dispatchers.Main) {
-                            message += clients.count().toString() + "\n"
-                            serverInfo_text.text = message
-
-                        }
-                    }
-                }
-            } catch (e: IOException) {
-                e.printStackTrace()
-            }
-        }
-    }
-
-    suspend fun socketServerReplyThread (hostThreadSocket: Socket, cnt: Int, respon : String?){
-        val outputStream: OutputStream
-        var msgReply = ""
-        if(respon != null) msgReply = "$respon"
-        else  msgReply = "Hello from Pepe, you are #$cnt \n"
-        try {
-            outputStream = hostThreadSocket.getOutputStream()
-            val printWriter = PrintWriter(outputStream)
-            printWriter.write(msgReply)
-            printWriter.flush()
-
-            message += "replayed: $msgReply\n"
-
-
-        /*    val byteArrayOutputStream = ByteArrayOutputStream(1024)
-            val buffer = ByteArray(1024)
-            var bytesRead : Int
-
-           val inputStream = hostThreadSocket.getInputStream()
-
-            while (inputStream.read(buffer).also {bytesRead = it} != -1){
-                byteArrayOutputStream.write(buffer, 0, bytesRead)
-                message += byteArrayOutputStream.toString("UTF-8")
-
-            }
-            printStream.close()
-            */
-        } catch (e: IOException) {
-            // TODO Auto-generated catch block
-            e.printStackTrace()
-            message += "Something wrong! $e\n"
-        }
-
-        withContext(Dispatchers.Main) {
-            serverInfo_text.text = message
-
-        }
-    }
-
-
-   /* suspend fun sendMessage(clientReciverSocket : Socket, msn : String)
-    {
-        if (!clientReciverSocket.isClosed) {
-            val outputStream: OutputStream
-            try {
-                outputStream = clientReciverSocket.getOutputStream()
-                val printWriter = PrintWriter(outputStream)
-                printWriter.write(msn)
-                printWriter.flush()
-            } catch (e: IOException) {
-                // TODO Auto-generated catch block
-                e.printStackTrace()
-            }
-        }
-    }
-*/
-
-    suspend fun readMessages(){
-        withContext(Dispatchers.IO) {
-
-            for (socket in clients) {
-                val byteArrayOutputStream = ByteArrayOutputStream(1024)
-                val buffer = ByteArray(1024)
-                var bytesRead : Int
-                val inputStream = socket.getInputStream()
-                var response = ""
-
-                while (true) {
-                    bytesRead = inputStream.read(buffer)
-                    if (bytesRead == -1)
-                        break
-                    byteArrayOutputStream.write(buffer, 0, bytesRead)
-                    response += byteArrayOutputStream.toString("UTF-8")
-
-                    socketServerReplyThread(socket, 9999999, response)
-                    response = ""
-                    byteArrayOutputStream.reset()
-                }
-
-
-            }
-
-/*
-            for (socket in clients) {
-                if (!socket.isClosed) {
-                    var reader: BufferedReader =
-                        BufferedReader(InputStreamReader(socket.getInputStream()))
-
-                    var line = withContext(Dispatchers.IO) {
-                        reader.readLine()
-                    }
-
-                    socketServerReplyThread(socket, 9999999)
-                    // sendMessage(socket, line)
-
-                    withContext(Dispatchers.Main) {
-                        serverInfo_text.text = line
-
-                    }
-                }
-            }*/
-        }
-        /* withContext(Dispatchers.IO) {
-                while(true)
-                {
-                    for(socket in clients)
-                    {
-                        val reader = BufferedReader(InputStreamReader(socket.getInputStream(), "UTF-8"))
-
-                        val inputStream = socket!!.getInputStream()
-                        val b = readLine()!!
-                        socket.getOutputStream().write((b.toByteArray()))
-                    }
-                }
-            }*/
-    }
-
-    private fun closeServer()
-    {
-        if (serverRunning) {
-            try {
-
-
-                serverRunning = false
-                startServerCorroutine?.cancel()
-                listenMessagesServerCorroutine?.cancel()
-                serverSocket.close()
-                clients.clear()
-
-
-                serverPort_text.text = "Server Closed"
-                serverIp_text.text = "Server Closed"
-                serverInfo_text.text = ""
-                message = ""
-            } catch (e: IOException) {
-                e.printStackTrace()
-            }
-        }
-    }
-
-    private fun getIpAddress() : String {
-        var ip = ""
-
-        try{
-            val enumNetworkInterface = NetworkInterface.getNetworkInterfaces()
-            while (enumNetworkInterface.hasMoreElements()){
-                val networkInterface = enumNetworkInterface.nextElement()
-                val enumInetAddress = networkInterface.inetAddresses
-                while (enumInetAddress.hasMoreElements()){
-                    val inetAddress = enumInetAddress.nextElement()
-
-                    if (inetAddress.isSiteLocalAddress) {
-                        ip += "SiteLocalAddress: " + inetAddress.hostAddress + "\n"
-                    }
-                }
-            }
-
-        }catch(se : SocketException){
-            se.printStackTrace()
-            ip += "Something Wrong! " + se.toString() + "\n"
-        }
-
-        return ip
+        server.closeServer()
     }
 }
 
-/*
-    private fun launchServer(){
-
-    }
 
 
-  /*  class SocketServerThread : Thread() {
-        val SocketServerPORT = 8000
-        var count = 0
-        override fun run() {
-        }
-    }
-*/
-
-    private fun getIpAdress() : String {
-        var ip = ""
-
-        try{
-            val enumNetworkInterface = NetworkInterface.getNetworkInterfaces()
-            while (enumNetworkInterface.hasMoreElements()){
-                val networkInterface = enumNetworkInterface.nextElement()
-                val enumInetAddress = networkInterface.inetAddresses
-                while (enumInetAddress.hasMoreElements()){
-                    val inetAddress = enumInetAddress.nextElement()
-
-                    if (inetAddress.isSiteLocalAddress) {
-                        ip += "SiteLocalAddress: " + inetAddress.hostAddress + "\n"
-                    }
-                }
-            }
-
-        }catch(se : SocketException){
-            se.printStackTrace()
-            ip += "Something Wrong! " + se.toString() + "\n"
-        }
-
-        return ip
-    }
-}
-
- */
