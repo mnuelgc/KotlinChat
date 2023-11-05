@@ -34,7 +34,7 @@ class Server internal constructor(
     var message : String? = ""
 
     private lateinit var serverSocket: ServerSocket
-    var clients : ArrayList <Socket> = ArrayList<Socket>()
+    private var clients : ArrayList <Socket> = ArrayList<Socket>()
 
     public suspend fun initSocket() {
         if (!serverRunning) {
@@ -81,7 +81,7 @@ class Server internal constructor(
         }
     }
 
-    suspend fun socketServerReply(hostThreadSocket: Socket, cnt: Int, respon : String?){
+    private suspend fun socketServerReply(hostThreadSocket: Socket, cnt: Int, respon : String?){
         val outputStream: OutputStream
         var msgReply = ""
         if(respon != null) msgReply = "$respon"
@@ -141,9 +141,6 @@ class Server internal constructor(
             serverInfo_text.text = mess
         }
         clients.remove(clientSocket)
-
-
-
     }
 
     suspend fun parseClientMessage(clientMessage : String, senderSocket : Socket){
@@ -162,7 +159,6 @@ class Server internal constructor(
                 serverRunning = false
                 serverSocket.close()
                 clients.clear()
-
 
                 serverPort_text.text = "Server Closed"
                 serverIp_text.text = "Server Closed"

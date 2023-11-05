@@ -36,55 +36,7 @@ class Client internal constructor(
     public fun setPort(port :Int){
         dsPort = port
     }
-/*
-    suspend fun connectClientToServer(){
 
-        withContext(Dispatchers.IO) {
-            if (!isConnectedToServer) {
-                try {
-                    if (socket == null) socket = Socket(dstAddress, dsPort)
-
-                    val byteArrayOutputStream = ByteArrayOutputStream(1024)
-                    val buffer = ByteArray(1024)
-                    var bytesRead: Int
-                    val inputStream = socket!!.getInputStream()
-
-                    if (socket != null) {
-                        response = ""
-                        isConnectedToServer = true
-                    }
-
-
-                   /* while (inputStream.read(buffer).also { bytesRead = it } != -1) {
-                        byteArrayOutputStream.write(buffer, 0, bytesRead)
-                        response += byteArrayOutputStream.toString("UTF-8")
-                        byteArrayOutputStream.flush()
-
-                    }*/
-
-                    while (true) {
-                        bytesRead = inputStream.read(buffer)
-                        if (bytesRead == -1) {
-                            // Se ha llegado al final del flujo de entrada
-                            break
-                        }
-
-                        byteArrayOutputStream.write(buffer, 0, bytesRead)
-                    }
-
-// Ahora tienes los datos en byteArrayOutputStream
-                    val response = byteArrayOutputStream.toString("UTF-8")
-
-
-                } catch (ex: UnknownHostException) {
-                    ex.printStackTrace()
-                } catch (ex: IOException) {
-                    ex.printStackTrace()
-                }
-            }
-        }
-    }
-*/
     suspend fun connectClientToServer() {
         withContext(Dispatchers.IO) {
             if (!isConnectedToServer) {
@@ -142,29 +94,6 @@ class Client internal constructor(
         isConnectedToServer = false
     }
 
-         /*   try {
-/*
-                socket!!.outputStream.write("Hello from the client!".toByteArray());
-                var text : String = socket!!.inputStream.read().toString()
-*/
-               PrintStream(socket!!.getOutputStream(), true)
-               // val reader = BufferedReader(InputStreamReader(socket!!.getInputStream(), "UTF-8"))
-                val writer = PrintStream(socket!!.getOutputStream(), true)
-
-                //ESCRITURA LA PRIMERA VEZ PARA IDENTIFICARSE
-                writer.print(message)
-                writer.flush()
-          //      socket = Socket(dstAddress, dsPort)
-
-
-            } catch (ex: UnknownHostException) {
-                ex.printStackTrace()
-            } catch (ex: IOException) {
-                ex.printStackTrace()
-            }*/
-   //     }
-    //}
-
     suspend fun writeResponse(){
         withContext(Dispatchers.Main) {
             textResponse.text = response
@@ -175,7 +104,6 @@ class Client internal constructor(
                 viewBinding.root.setBackgroundColor(Color.YELLOW)
             }
         }
-
     }
 
 
@@ -191,6 +119,5 @@ class Client internal constructor(
             }
         }
     }
-
 
 }
