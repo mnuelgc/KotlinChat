@@ -8,6 +8,7 @@ import androidx.lifecycle.lifecycleScope
 import es.ua.eps.chatserver.databinding.ActivityMainBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -60,8 +61,11 @@ class MainActivity : AppCompatActivity() {
 
             if (startServerCorroutine!!.isActive) {
                 listenMessagesServerCorroutine = lifecycleScope.launch(Dispatchers.IO) {
+                   // delay(2000)
+                    startServerCorroutine!!.join()
                     if (isActive) {
                         while (true) {
+                            server.waitConnection()
                             server.readMessages()
                         }
                     }

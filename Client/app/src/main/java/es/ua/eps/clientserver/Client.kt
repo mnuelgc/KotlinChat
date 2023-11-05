@@ -1,7 +1,14 @@
 package es.ua.eps.clientserver
 
+import android.content.Context
 import android.graphics.Color
+import android.os.Parcel
+import android.os.Parcelable
+import android.view.View
+import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.constraintlayout.widget.ConstraintLayout
+import es.ua.eps.clientserver.databinding.ActivityConversationBinding
 import es.ua.eps.clientserver.databinding.ActivityMainBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -12,21 +19,25 @@ import java.io.InputStreamReader
 import java.io.OutputStream
 import java.io.PrintStream
 import java.io.PrintWriter
+import java.io.Serializable
 import java.net.Socket
 import java.net.UnknownHostException
 
-class Client internal constructor(
-    var textResponse : TextView,
-    var viewBinding: ActivityMainBinding
-){
+class Client() : Serializable {
     val DISCONNECT_CODE : Int = 1616
 
-    var dstAddress =""
+    var dstAddress :String?=""
     var dsPort = 0
 
     var isConnectedToServer = false
-    var response = ""
+    var response : String? = ""
     var socket: Socket? = null
+
+    var responseText : Dialog? = null
+
+    var parentView : View? = null
+
+    var messagesInList = 0
 
     public fun setAddress(address :String){
         dstAddress = address
@@ -64,11 +75,13 @@ class Client internal constructor(
                         response += byteArrayOutputStream.toString("UTF-8")
 
                         withContext(Dispatchers.Main){
-                            writeResponse()
-                            response = ""
+                           if(parentView != null)
+                           {
+                                writeResponse(parentView!!)
+                                response = ""
+                               byteArrayOutputStream.reset()
+                            }
                         }
-
-
                     }
 
                 } catch (ex: UnknownHostException) {
@@ -85,6 +98,10 @@ class Client internal constructor(
             val writer: PrintWriter = PrintWriter(socket!!.getOutputStream(), true)
             writer.println (message)
             writer.flush()
+            withContext(Dispatchers.Main){
+                val chatSpaceView = parentView?.findViewById<ChatSpaceView>(R.id.chatSpace)
+                chatSpaceView?.appendDialog(message, 0)
+            }
         }
     }
 
@@ -94,18 +111,11 @@ class Client internal constructor(
         isConnectedToServer = false
     }
 
-    suspend fun writeResponse(){
+    suspend fun writeResponse(rootView : View){
         withContext(Dispatchers.Main) {
-            textResponse.text = response
-
-            if (isConnectedToServer) {
-                viewBinding.root.setBackgroundColor(Color.GREEN)
-            } else {
-                viewBinding.root.setBackgroundColor(Color.YELLOW)
-            }
+            writeDialog(response, rootView)
         }
     }
-
 
     suspend fun closeComunication()
     {
@@ -120,4 +130,14 @@ class Client internal constructor(
         }
     }
 
+    fun writeDialog(message: String?, rootView: View)
+    {
+        var chatSpaceView = rootView.findViewById<ChatSpaceView>(R.id.chatSpace)
+        chatSpaceView.appendDialog(message!!, 1)
+    }
+
+
+    fun setRootView(newRootView : View) {
+        parentView = newRootView
+    }
 }

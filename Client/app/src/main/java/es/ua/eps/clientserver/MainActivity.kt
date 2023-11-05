@@ -1,5 +1,6 @@
 package es.ua.eps.clientserver
 
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Button
@@ -8,32 +9,35 @@ import android.widget.TextView
 import androidx.lifecycle.lifecycleScope
 import es.ua.eps.clientserver.databinding.ActivityMainBinding
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.net.InetAddress
 import java.net.Socket
 
 class MainActivity : AppCompatActivity() {
-    lateinit var viewBinding : ActivityMainBinding
 
-    lateinit var response : TextView
+    companion object {
+        const val EXTRA_CLIENT = "Extra_Client"
+    }
+
+    lateinit var viewBinding: ActivityMainBinding
+
+    lateinit var response: TextView
 
     lateinit var editTextAddress: EditText
     lateinit var editTextPort: EditText
 
-    lateinit var buttonConnect : Button
-    lateinit var buttonDisconnet : Button
+    lateinit var buttonConnect: Button
+    lateinit var buttonDisconnet: Button
 
-    lateinit var messageText : EditText
-    lateinit var buttonSendMessage : Button
 
-    lateinit var myClient :Client
+    lateinit var myClient: Client
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         viewBinding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(viewBinding.root)
-
 
         response = viewBinding.ServerResponse
 
@@ -43,38 +47,49 @@ class MainActivity : AppCompatActivity() {
         buttonConnect = viewBinding.buttonConnect
         buttonDisconnet = viewBinding.buttonDisconnect
 
-        messageText = viewBinding.messageText
-        buttonSendMessage = viewBinding.sendMessageButton
-
         editTextAddress.setText("192.168.1.46")
         editTextPort.setText("8080")
 
-        myClient = Client(response, viewBinding)
+        myClient = Client()
 
-
-        buttonConnect.setOnClickListener{
-            if (editTextAddress.text.toString() !="" && editTextPort.text.toString() != "")
-            {
+        buttonConnect.setOnClickListener {
+            if (editTextAddress.text.toString() != "" && editTextPort.text.toString() != "") {
                 myClient.setAddress(editTextAddress.text.toString())
                 myClient.setPort(editTextPort.text.toString().toInt())
-                lifecycleScope.launch(Dispatchers.IO){
-                    myClient.connectClientToServer()
+
+                SystemClient.setClient(myClient)
+                lifecycleScope.launch(Dispatchers.IO) {
+                    SystemClient.connectClientToServer()
+                }
+
+                GlobalScope.launch(Dispatchers.IO) {
+                    while (true) {
+                        if (myClient.isConnectedToServer) {
+                            GlobalScope.launch(Dispatchers.Main) {
+
+                                val intentOpenChat =
+                                    Intent(this@MainActivity, ConversationActivity::class.java)
+                                startActivity(intentOpenChat)
+                            }
+                            break
+                        }
+                    }
                 }
             }
         }
 
-        buttonDisconnet.setOnClickListener{
+/*        buttonConnect.setOnClickListener {
+           var intentA = Intent(this@MainActivity, ProbesActivity::class.java)
+            startActivity(intentA)
+        }
+*/
+        buttonDisconnet.setOnClickListener {
             lifecycleScope.launch(Dispatchers.IO) {
-                myClient.closeComunication()
-                myClient.writeResponse()
+                SystemClient.closeComunication()
+                SystemClient.writeResponse(viewBinding.root)
             }
         }
 
-        buttonSendMessage.setOnClickListener{
-            lifecycleScope.launch(Dispatchers.IO) {
-                myClient.sendMessageToServer(messageText.text.toString())
-                messageText.setText("")
-            }
-        }
+
     }
 }

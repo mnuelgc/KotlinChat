@@ -3,10 +3,11 @@ package es.ua.eps.chatserver
 import android.widget.TextView
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.OutputStream
@@ -34,7 +35,7 @@ class Server internal constructor(
     var message : String? = ""
 
     private lateinit var serverSocket: ServerSocket
-    private var clients : ArrayList <Socket> = ArrayList<Socket>()
+    public var clients : ArrayList <Socket> = ArrayList<Socket>()
 
     public suspend fun initSocket() {
         if (!serverRunning) {
@@ -53,31 +54,38 @@ class Server internal constructor(
                     }
                     serverRunning = true
                     count = 0
-                    while (true) {
-                        val socket = serverSocket!!.accept()
-
-                        count++
-                        message += """"#$count from ${socket.inetAddress}:${socket.port}"""
-
-
-                        withContext(Dispatchers.Main) {
-                            serverInfo_text.text = message
-                        }
-
-                        socketServerReply(socket, count, null)
-
-                        clients.add(socket)
-
-                        withContext(Dispatchers.Main) {
-                            message += clients.count().toString() + "\n"
-                            serverInfo_text.text = message
-
-                        }
-                    }
                 }
             } catch (e: IOException) {
                 e.printStackTrace()
             }
+        }
+    }
+
+
+    suspend fun waitConnection() {
+        try{
+            val socket = serverSocket!!.accept()
+
+            count++
+            message += """"#$count from ${socket.inetAddress}:${socket.port}"""
+
+
+            withContext(Dispatchers.Main) {
+                serverInfo_text.text = message
+            }
+
+            socketServerReply(socket, count, null)
+
+            clients.add(socket)
+
+            withContext(Dispatchers.Main) {
+                message += clients.count().toString() + "\n"
+                serverInfo_text.text = message
+
+            }
+        }
+        catch (e: IOException) {
+            e.printStackTrace()
         }
     }
 
@@ -92,7 +100,7 @@ class Server internal constructor(
             printWriter.write(msgReply)
             printWriter.flush()
 
-            message += "replayed: $msgReply\n"
+            message += "replayed: $msgReply"
 
         } catch (e: IOException) {
             // TODO Auto-generated catch block
@@ -108,27 +116,31 @@ class Server internal constructor(
     suspend fun readMessages() {
         withContext(Dispatchers.IO) {
             for (socket in clients) {
-                withContext(Dispatchers.Main) {
-                    println("Is Closed " + socket.isClosed())
-                    println("Is Connected " + socket.isConnected())
-                    println("Is Bound " + socket.isBound())
-                }
                 val byteArrayOutputStream = ByteArrayOutputStream(1024)
                 val buffer = ByteArray(1024)
                 var bytesRead: Int
                 val inputStream = socket.getInputStream()
                 var clientMessage = ""
 
-                while (true) {
-                    bytesRead = inputStream.read(buffer)
-                    if (bytesRead == -1)
-                        break
-                    byteArrayOutputStream.write(buffer, 0, bytesRead)
-                    clientMessage += byteArrayOutputStream.toString("UTF-8")
+                GlobalScope.launch(Dispatchers.IO) {
+                    while (true) {
+                        println(inputStream.available())
 
-                    parseClientMessage(clientMessage, socket)
-                    clientMessage = ""
-                    byteArrayOutputStream.reset()
+                        bytesRead = inputStream.read(buffer)
+
+                        if (bytesRead == -1) {
+                            break
+                        }
+                        byteArrayOutputStream.write(buffer, 0, bytesRead)
+                        clientMessage += byteArrayOutputStream.toString("UTF-8")
+
+                        if (clientMessage.last() == '\n') {
+                            clientMessage = clientMessage.dropLast(1)
+                        }
+                        parseClientMessage(clientMessage, socket)
+                        clientMessage = ""
+                        byteArrayOutputStream.reset()
+                    }
                 }
             }
         }
