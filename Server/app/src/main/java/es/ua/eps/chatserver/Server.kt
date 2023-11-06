@@ -14,15 +14,13 @@ import java.net.ServerSocket
 import java.net.Socket
 import java.net.SocketException
 
+const val DISCONNECT_CODE : Int = 1616
+
 class Server internal constructor(
     val serverIp_text : TextView,
     val serverInfo_text : TextView,
     val serverPort_text : TextView
 ) {
-
-    val DISCONNECT_CODE : Int = 1616
-
-
 
     val SocketServerPORT = 8080
     var serverRunning = false
@@ -31,7 +29,7 @@ class Server internal constructor(
     var count = 0
     var message : String? = ""
 
-    var salasDeChat = mutableMapOf<Int, ArrayList<Socket>>()
+    var salasDeChat = mutableMapOf<Int, ChatRoom>()
 
 
     private lateinit var serverSocket: ServerSocket
@@ -50,7 +48,6 @@ class Server internal constructor(
                         serverPort_text.text = ("I'm waiting here: "
                                 + serverSocket.localPort)
                         //  serverInfo_text.text = ""
-                        salasDeChat.put(0, ArrayList<Socket>())
                     }
                     serverRunning = true
                     count = 0
@@ -74,16 +71,23 @@ class Server internal constructor(
                 serverInfo_text.text = message
             }
 
-            clients.add(socket)
-            var sala = salasDeChat.get(0)
+            val client = ClientInServer(count, socket)
 
+            if (salasDeChat.count() == 0)
+            {
+                val salaActual = ChatRoom(0, "Sala de Pepe", client)
+                salasDeChat.put(salaActual.getId(), salaActual)
+            }
+            else{
+                val salaActual = salasDeChat.get(0)
+                salaActual?.clientGetIn(client)
+            }
+            val salaActual = salasDeChat.get(0)
 
-            sala?.add(socket)
+            println("HAY ${salaActual?.howManyClients()} clientes")
 
-            salasDeChat.put(0,sala!! )
-
-            var salaChat = 0
-            socketServerReply(socket, null, salaChat, null)
+            socketServerReply(socket, null, 0, null)
+            count++
 
             withContext(Dispatchers.Main) {
                 message += clients.count().toString() + "\n"
@@ -96,14 +100,15 @@ class Server internal constructor(
         }
     }
 
-    private suspend fun socketServerReply(hostThreadSocket: Socket, salaActual: ArrayList<Socket>?, cnt: Int, respon : String?){
+    private suspend fun socketServerReply(hostThreadSocket: Socket, salaActual: ChatRoom?, cnt: Int, respon : String?){
         var outputStream: OutputStream
         var msgReply = ""
         if(respon != null) msgReply = "$respon"
         else  msgReply = "Estás en la sala $cnt \n"
         try {
             if (salaActual != null) {
-                for (socket in salaActual) {
+                for (client in salaActual.getClients()) {
+                    val socket = client.getSocket()
                     if (socket != hostThreadSocket)
                     {
                         outputStream = socket.getOutputStream()
@@ -144,7 +149,8 @@ class Server internal constructor(
                 var salaActual = salasDeChat[i]
 
                 if (salaActual != null) {
-                    for (socket in salaActual) {
+                    for (client in salaActual.getClients()) {
+                        val socket = client.getSocket()
                         val byteArrayOutputStream = ByteArrayOutputStream(1024)
                         val buffer = ByteArray(1024)
                         var bytesRead: Int
@@ -189,7 +195,7 @@ class Server internal constructor(
     suspend fun parseClientMessage(
         clientMessage: String,
         senderSocket: Socket,
-        salaActual: ArrayList<Socket>?
+        salaActual: ChatRoom?
     ){
         if (clientMessage.startsWith(DISCONNECT_CODE.toString())){
             disconnectClient(senderSocket)
