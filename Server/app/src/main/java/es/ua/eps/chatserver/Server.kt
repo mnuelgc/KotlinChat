@@ -1,13 +1,10 @@
 package es.ua.eps.chatserver
 
 import android.widget.TextView
-import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.OutputStream
@@ -34,6 +31,9 @@ class Server internal constructor(
     var count = 0
     var message : String? = ""
 
+    var salasDeChat = mutableMapOf<Int, ArrayList<Socket>>()
+
+
     private lateinit var serverSocket: ServerSocket
     public var clients : ArrayList <Socket> = ArrayList<Socket>()
 
@@ -50,7 +50,7 @@ class Server internal constructor(
                         serverPort_text.text = ("I'm waiting here: "
                                 + serverSocket.localPort)
                         //  serverInfo_text.text = ""
-
+                        salasDeChat.put(0, ArrayList<Socket>())
                     }
                     serverRunning = true
                     count = 0
@@ -74,9 +74,16 @@ class Server internal constructor(
                 serverInfo_text.text = message
             }
 
-            socketServerReply(socket, count, null)
-
             clients.add(socket)
+            var sala = salasDeChat.get(0)
+
+
+            sala?.add(socket)
+
+            salasDeChat.put(0,sala!! )
+
+            var salaChat = 0
+            socketServerReply(socket, null, salaChat, null)
 
             withContext(Dispatchers.Main) {
                 message += clients.count().toString() + "\n"
@@ -89,18 +96,35 @@ class Server internal constructor(
         }
     }
 
-    private suspend fun socketServerReply(hostThreadSocket: Socket, cnt: Int, respon : String?){
-        val outputStream: OutputStream
+    private suspend fun socketServerReply(hostThreadSocket: Socket, salaActual: ArrayList<Socket>?, cnt: Int, respon : String?){
+        var outputStream: OutputStream
         var msgReply = ""
         if(respon != null) msgReply = "$respon"
-        else  msgReply = "Hello from Pepe, you are #$cnt \n"
+        else  msgReply = "Estás en la sala $cnt \n"
         try {
-            outputStream = hostThreadSocket.getOutputStream()
-            val printWriter = PrintWriter(outputStream)
-            printWriter.write(msgReply)
-            printWriter.flush()
+            if (salaActual != null) {
+                for (socket in salaActual) {
+                    if (socket != hostThreadSocket)
+                    {
+                        outputStream = socket.getOutputStream()
+                        val printWriter = PrintWriter(outputStream)
+                        printWriter.write(msgReply)
+                        printWriter.flush()
 
-            message += "replayed: $msgReply"
+                        message += "replayed: $msgReply\n"
+                    }
+                }
+            }else{
+              /*  outputStream = hostThreadSocket.getOutputStream()
+                val printWriter = PrintWriter(outputStream)
+                printWriter.write(msgReply)
+                printWriter.flush()
+
+                message += "replayed: $msgReply"
+
+               */
+            }
+
 
         } catch (e: IOException) {
             // TODO Auto-generated catch block
@@ -115,31 +139,38 @@ class Server internal constructor(
     }
     suspend fun readMessages() {
         withContext(Dispatchers.IO) {
-            for (socket in clients) {
-                val byteArrayOutputStream = ByteArrayOutputStream(1024)
-                val buffer = ByteArray(1024)
-                var bytesRead: Int
-                val inputStream = socket.getInputStream()
-                var clientMessage = ""
+            for (i in 0 until salasDeChat.count())
+            {
+                var salaActual = salasDeChat[i]
 
-                GlobalScope.launch(Dispatchers.IO) {
-                    while (true) {
-                        println(inputStream.available())
+                if (salaActual != null) {
+                    for (socket in salaActual) {
+                        val byteArrayOutputStream = ByteArrayOutputStream(1024)
+                        val buffer = ByteArray(1024)
+                        var bytesRead: Int
+                        val inputStream = socket.getInputStream()
+                        var clientMessage = ""
 
-                        bytesRead = inputStream.read(buffer)
+                        GlobalScope.launch(Dispatchers.IO) {
+                            while (true) {
+                                println(inputStream.available())
 
-                        if (bytesRead == -1) {
-                            break
+                                bytesRead = inputStream.read(buffer)
+
+                                if (bytesRead == -1) {
+                                    break
+                                }
+                                byteArrayOutputStream.write(buffer, 0, bytesRead)
+                                clientMessage += byteArrayOutputStream.toString("UTF-8")
+
+                                if (clientMessage.last() == '\n') {
+                                    clientMessage = clientMessage.dropLast(1)
+                                }
+                                parseClientMessage(clientMessage, socket, salaActual)
+                                clientMessage = ""
+                                byteArrayOutputStream.reset()
+                            }
                         }
-                        byteArrayOutputStream.write(buffer, 0, bytesRead)
-                        clientMessage += byteArrayOutputStream.toString("UTF-8")
-
-                        if (clientMessage.last() == '\n') {
-                            clientMessage = clientMessage.dropLast(1)
-                        }
-                        parseClientMessage(clientMessage, socket)
-                        clientMessage = ""
-                        byteArrayOutputStream.reset()
                     }
                 }
             }
@@ -148,19 +179,23 @@ class Server internal constructor(
 
     suspend fun disconnectClient(clientSocket: Socket){
         withContext(Dispatchers.Main){
-            val mess = "Client Log Out"
+            message = "Client Log Out"
             count --
-            serverInfo_text.text = mess
+            serverInfo_text.text = message
         }
         clients.remove(clientSocket)
     }
 
-    suspend fun parseClientMessage(clientMessage : String, senderSocket : Socket){
+    suspend fun parseClientMessage(
+        clientMessage: String,
+        senderSocket: Socket,
+        salaActual: ArrayList<Socket>?
+    ){
         if (clientMessage.startsWith(DISCONNECT_CODE.toString())){
             disconnectClient(senderSocket)
         }
         else{
-            socketServerReply(senderSocket, 9999999, clientMessage)
+            socketServerReply(senderSocket, salaActual,  9999999, clientMessage)
         }
     }
 
