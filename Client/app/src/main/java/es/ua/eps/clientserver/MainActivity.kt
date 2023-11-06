@@ -17,10 +17,6 @@ import java.net.Socket
 
 class MainActivity : AppCompatActivity() {
 
-    companion object {
-        const val EXTRA_CLIENT = "Extra_Client"
-    }
-
     lateinit var viewBinding: ActivityMainBinding
 
     lateinit var response: TextView
@@ -68,7 +64,7 @@ class MainActivity : AppCompatActivity() {
                             GlobalScope.launch(Dispatchers.Main) {
 
                                 val intentOpenChat =
-                                    Intent(this@MainActivity, ConversationActivity::class.java)
+                                    Intent(this@MainActivity, HomeActivity::class.java)
                                 startActivity(intentOpenChat)
                             }
                             break
@@ -78,11 +74,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-/*        buttonConnect.setOnClickListener {
-           var intentA = Intent(this@MainActivity, ProbesActivity::class.java)
-            startActivity(intentA)
-        }
-*/
         buttonDisconnet.setOnClickListener {
             lifecycleScope.launch(Dispatchers.IO) {
                 SystemClient.closeComunication()
