@@ -260,7 +260,7 @@ class Server internal constructor(
         salasDeChat[0] = lobbyRoom
         val idSala = salasDeChat.count()
         val salaActual =
-            ChatRoom(1, clientMessage.removePrefix(CREATE_CHAT_ROOM_CODE.toString()), client)
+            ChatRoom(idSala, clientMessage.removePrefix(CREATE_CHAT_ROOM_CODE.toString()), client)
         salasDeChat[salaActual.getId()] = salaActual
 
         message += "Chat room ${salaActual.getName()} created\n"
@@ -274,7 +274,7 @@ class Server internal constructor(
     private suspend fun joinToChatRoom(clientMessage: String, client: ClientInServer) {
         lobbyRoom.clientGoOut(client)
         salasDeChat[0] = lobbyRoom
-        val salaActual = salasDeChat[1]
+        val salaActual = salasDeChat[salasDeChat.count() -1]
         salaActual?.clientGetIn(client)
         salasDeChat[salaActual?.getId()!!] = salaActual
 
