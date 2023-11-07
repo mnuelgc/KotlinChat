@@ -1,12 +1,14 @@
 package es.ua.eps.chatserver
 
 import android.widget.TextView
+import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.OutputStream
@@ -15,6 +17,7 @@ import java.net.NetworkInterface
 import java.net.ServerSocket
 import java.net.Socket
 import java.net.SocketException
+import java.sql.Time
 
 const val DISCONNECT_CODE: Int = 1616
 const val CREATE_CHAT_ROOM_CODE: Int = 2001
@@ -187,27 +190,71 @@ class Server internal constructor(
              }
          }
  */
+    /* suspend fun readMessages() {
+         while (true) {
+             for (i in 0 until salasDeChat.count()) {
+                 val salaActual = salasDeChat[i]
+
+                 if (salaActual != null) {
+                     withContext(Dispatchers.IO) {
+                     for (client in salaActual.getClients()) {
+                  //       withTimeoutOrNull(500) {
+
+                                 val byteArrayOutputStream = ByteArrayOutputStream(1024)
+                                 val buffer = ByteArray(1024)
+                                 var bytesRead: Int
+                                 val inputStream = client.getInputStream()
+                                 var clientMessage = ""
+
+                                 //    while (true) {
+
+                                 bytesRead = inputStream.read(buffer)
+
+
+                                 if (bytesRead == -1) {
+                                     continue
+                                 }
+                                 byteArrayOutputStream.write(buffer, 0, bytesRead)
+                                 clientMessage += byteArrayOutputStream.toString("UTF-8")
+
+                                 if (clientMessage.last() == '\n') {
+                                     clientMessage = clientMessage.dropLast(1)
+                                 }
+                                 parseClientMessage(clientMessage, client, salaActual)
+                                 clientMessage = ""
+                                 byteArrayOutputStream.reset()
+                            // }
+                         }
+                         //continue
+                     }
+                 }
+             }
+         }
+     }
+ //}
+
+     */
     suspend fun readMessages() {
         withContext(Dispatchers.IO) {
-            while (true) {
-                for (i in 0 until salasDeChat.count()) {
-                    val salaActual = salasDeChat[i]
+            for (i in 0 until salasDeChat.count()) {
+                var salaActual = salasDeChat[i]
 
-                    if (salaActual != null) {
-                        for (client in salaActual.getClients()) {
-                            val byteArrayOutputStream = ByteArrayOutputStream(1024)
-                            val buffer = ByteArray(1024)
-                            var bytesRead: Int
-                            val inputStream = client.getInputStream()
-                            var clientMessage = ""
+                if (salaActual != null) {
+                    for (client in salaActual.getClients()) {
+                        val byteArrayOutputStream = ByteArrayOutputStream(1024)
+                        val buffer = ByteArray(1024)
+                        var bytesRead: Int
+                        val inputStream = client.getInputStream()
+                        var clientMessage = ""
 
-                                //   while (true) {
+                        GlobalScope.launch(Dispatchers.IO) {
+                            while (true) {
                                 println(inputStream.available())
 
                                 bytesRead = inputStream.read(buffer)
 
                                 if (bytesRead == -1) {
-                                    //  break
+                                    break
                                 }
                                 byteArrayOutputStream.write(buffer, 0, bytesRead)
                                 clientMessage += byteArrayOutputStream.toString("UTF-8")
@@ -218,13 +265,14 @@ class Server internal constructor(
                                 parseClientMessage(clientMessage, client, salaActual)
                                 clientMessage = ""
                                 byteArrayOutputStream.reset()
-                                //  }
+                            }
                         }
                     }
                 }
             }
         }
     }
+
 
     suspend fun disconnectClient(clientSocket: ClientInServer) {
         withContext(Dispatchers.Main) {
@@ -273,31 +321,33 @@ class Server internal constructor(
     }
 
     private suspend fun createNewChatRoom(clientMessage: String, client: ClientInServer) {
-        lobbyRoom.clientGoOut(client)
-        val idSala = salasDeChat.count()
-        val salaActual =
-            ChatRoom(1, clientMessage.removePrefix(CREATE_CHAT_ROOM_CODE.toString()), client)
-        salasDeChat.put(salaActual.getId(), salaActual)
+        /*  lobbyRoom.clientGoOut(client)
+          val idSala = salasDeChat.count()
+          val salaActual =
+              ChatRoom(1, clientMessage.removePrefix(CREATE_CHAT_ROOM_CODE.toString()), client)
+          salasDeChat.put(salaActual.getId(), salaActual)
 
-        message += "Chat room ${salaActual.getName()} created\n"
-        message += "HAY ${salasDeChat.count()} salas\n"
-        withContext(Dispatchers.Main) {
-            serverInfo_text.text = message
-        }
+          message += "Chat room ${salaActual.getName()} created\n"
+          message += "HAY ${salasDeChat.count()} salas\n"
+          withContext(Dispatchers.Main) {
+              serverInfo_text.text = message
+          }
 
-
+    */
     }
 
     private suspend fun joinToChatRoom(clientMessage: String, client: ClientInServer) {
-        lobbyRoom.clientGoOut(client)
-        val salaActual = salasDeChat.get(1)
-        salaActual?.clientGetIn(client)
-        message += "Client join to room ${salaActual?.getName()}"
-        message += "HAY ${salaActual?.howManyClients()} clientes\n"
+        /*   lobbyRoom.clientGoOut(client)
+           val salaActual = salasDeChat.get(1)
+           salaActual?.clientGetIn(client)
+           message += "Client join to room ${salaActual?.getName()}"
+           message += "HAY ${salaActual?.howManyClients()} clientes\n"
 
-        withContext(Dispatchers.Main) {
-            serverInfo_text.text = message
-        }
+           withContext(Dispatchers.Main) {
+               serverInfo_text.text = message
+           }
+
+         */
     }
 
     private suspend fun goOutChatRoom(
