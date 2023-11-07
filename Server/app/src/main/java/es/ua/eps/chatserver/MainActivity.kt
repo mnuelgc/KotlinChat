@@ -35,7 +35,7 @@ class MainActivity : AppCompatActivity() {
     private var startServerCorroutine: Job? = null
     private var listenMessagesServerCorroutine: Job? = null
 
-    lateinit var  server: Server
+    lateinit var server: Server
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         viewBinding = ActivityMainBinding.inflate(layoutInflater)
@@ -60,31 +60,41 @@ class MainActivity : AppCompatActivity() {
             }
 
             if (startServerCorroutine!!.isActive) {
-                listenMessagesServerCorroutine = lifecycleScope.launch(Dispatchers.IO) {
-                   // delay(2000)
-                    startServerCorroutine!!.join()
+                ///         listenMessagesServerCorroutine = lifecycleScope.launch(Dispatchers.IO) {
+                // delay(2000)
+                //  startServerCorroutine!!.join()
+                // if (isActive) {
+                // while (true) {
+                lifecycleScope.launch(Dispatchers.IO) {
                     if (isActive) {
-                        while (true) {
-                            server.waitConnection()
-                            server.readMessages()
-                        }
+                        startServerCorroutine!!.join()
+                        server.waitConnection()
+                    }
+                }
+                lifecycleScope.launch(Dispatchers.IO) {
+                    if (isActive) {
+                        startServerCorroutine!!.join()
+                        server.readMessages()
                     }
                 }
             }
         }
 
-        stopServer_button.setOnClickListener {
 
-            startServerCorroutine?.cancel()
-            server.closeServer()
-            listenMessagesServerCorroutine?.cancel()
-        }
-    }
 
-    protected override fun onDestroy() {
-        super.onDestroy()
+
+    stopServer_button.setOnClickListener{
+
+        startServerCorroutine?.cancel()
         server.closeServer()
+        listenMessagesServerCorroutine?.cancel()
     }
+}
+
+protected override fun onDestroy() {
+    super.onDestroy()
+    server.closeServer()
+}
 }
 
 

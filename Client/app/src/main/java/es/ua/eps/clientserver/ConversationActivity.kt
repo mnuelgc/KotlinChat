@@ -35,8 +35,7 @@ class ConversationActivity : AppCompatActivity() {
 
         buttonDisconnet.setOnClickListener {
             lifecycleScope.launch(Dispatchers.IO) {
-                SystemClient.closeComunication()
-                SystemClient.writeResponse(viewBinding.root)
+                SystemClient.goOutChatRoom()
                 finish()
             }
         }

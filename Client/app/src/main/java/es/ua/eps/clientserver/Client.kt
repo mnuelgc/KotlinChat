@@ -120,9 +120,14 @@ class Client() : Serializable {
     }
 
     suspend fun joinChatRoom() : Boolean{
-        val createRoomMessage = "${JOIN_CHAT_ROOM_CODE}"
-        sendMessageToServer(createRoomMessage)
+        val joinRoomMessage = "${JOIN_CHAT_ROOM_CODE}"
+        sendMessageToServer(joinRoomMessage)
         return true
+    }
+
+    suspend fun goOutChatRoom() {
+        val quitRoomMessage = "${GO_OUT_CHAT_ROOM_CODE}"
+        sendMessageToServer(quitRoomMessage)
     }
 
     suspend fun writeResponse(rootView : View){

@@ -54,4 +54,8 @@ object SystemClient {
         return client?.joinChatRoom() == true
     }
 
+    suspend fun goOutChatRoom(){
+        client?.goOutChatRoom()
+    }
+
 }

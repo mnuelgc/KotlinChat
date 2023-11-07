@@ -1,6 +1,7 @@
 package es.ua.eps.chatserver
 
 import android.graphics.Color
+import java.io.InputStream
 import java.net.Socket
 
 class ClientInServer internal constructor(
@@ -34,4 +35,7 @@ class ClientInServer internal constructor(
         return this.color
     }
 
+    public fun getInputStream() : InputStream{
+        return socket.getInputStream()
+    }
 }

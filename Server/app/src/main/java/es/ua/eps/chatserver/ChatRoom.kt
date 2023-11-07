@@ -53,6 +53,10 @@ class ChatRoom{
     fun getId() : Int{
         return id
     }
+
+    fun getName() : String{
+        return this.name
+    }
     fun howManyClients() : Int {
         return clientsInRoom.count()
     }
@@ -80,7 +84,7 @@ class ChatRoom{
         colorsInGroup.add(client.getColor())
         clientsInRoom.remove(client)
 
-        if(clientsInRoom.isEmpty())
+        if(clientsInRoom.isEmpty() && id != 0)
         {
             isActive = false
         }
