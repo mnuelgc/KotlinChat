@@ -3,14 +3,22 @@ package es.ua.eps.chatserver
 import android.graphics.Color
 
 const val MAX_CLIENTS = 5
-class ChatRoom(id : Int, name : String, creator : ClientInServer){
+class ChatRoom{
     private val id : Int
     private val clientsInRoom : ArrayList<ClientInServer>
     private var name : String
     private var isActive : Boolean
     private var colorsInGroup : ArrayList<Int>
 
-    init{
+    constructor(id: Int, name: String){
+        this.id = id
+        this.name = name
+        this.clientsInRoom = ArrayList<ClientInServer>()
+        isActive = true
+        colorsInGroup = ArrayList<Int>()
+    }
+    constructor(id: Int, name: String, creator : ClientInServer)
+    {
         this.id = id
         this.clientsInRoom = ArrayList<ClientInServer>()
         this.clientsInRoom.add(creator)
@@ -23,23 +31,36 @@ class ChatRoom(id : Int, name : String, creator : ClientInServer){
         colorsInGroup.add(Color.parseColor("#00FFFF"))
         colorsInGroup.add(Color.parseColor("#F000F0"))
 
+        creator.setColor(colorsInGroup.last())
+        creator.actualRoom = this
     }
-
     fun getId() : Int{
         return id
     }
+
+    fun getName() : String{
+        return this.name
+    }
+
     fun howManyClients() : Int {
         return clientsInRoom.count()
     }
 
     fun clientGetIn(client : ClientInServer) : Boolean{
 
+        if (this.id == 0){
+            clientsInRoom.add(client)
+            client.actualRoom = this
+            return true
+        }
         if (clientsInRoom.count() < MAX_CLIENTS)
         {
+            client.actualRoom = this
             val color = colorsInGroup.last()
             client.setColor(color)
             clientsInRoom.add(client)
             colorsInGroup.remove(color)
+
             if (!isActive) isActive = true
             return true
         }else{
@@ -48,14 +69,17 @@ class ChatRoom(id : Int, name : String, creator : ClientInServer){
     }
 
     fun clientGoOut(client : ClientInServer){
-        colorsInGroup.add(client.getColor())
         clientsInRoom.remove(client)
 
-        if(clientsInRoom.isEmpty())
-        {
-            isActive = false
+        if (id != 0) {
+            colorsInGroup.add(client.getColor())
+
+            if (clientsInRoom.isEmpty()) {
+                isActive = false
+            }
         }
     }
+
 
     fun isRoomActive() : Boolean{
         return isActive
@@ -65,4 +89,8 @@ class ChatRoom(id : Int, name : String, creator : ClientInServer){
         return clientsInRoom
     }
 
+    fun wipeRoom()
+    {
+        clientsInRoom.clear()
+    }
 }

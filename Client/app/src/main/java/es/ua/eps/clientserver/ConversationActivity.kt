@@ -19,9 +19,6 @@ class ConversationActivity : AppCompatActivity() {
     lateinit var buttonDisconnet: Button
     lateinit var chatSpaceView: ChatSpaceView
 
-    companion object {
-        const val  EXTRA_CLIENT  = "Extra_Client"
-    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -33,12 +30,9 @@ class ConversationActivity : AppCompatActivity() {
 
         SystemClient.setRootView(viewBinding.root)
 
-        println(SystemClient.getClient()?.DISCONNECT_CODE.toString())
-
         buttonDisconnet.setOnClickListener {
             lifecycleScope.launch(Dispatchers.IO) {
-                SystemClient.closeComunication()
-                SystemClient.writeResponse(viewBinding.root)
+                SystemClient.goOutChatRoom()
                 finish()
             }
         }

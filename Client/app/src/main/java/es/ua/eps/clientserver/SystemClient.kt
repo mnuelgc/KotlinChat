@@ -42,5 +42,19 @@ object SystemClient {
         client?.setRootView(newRootView)
     }
 
+    fun isclientConected() : Boolean {
+        return client?.isConnectedToServer == true
+    }
 
+    suspend fun createChatRoom(){
+        client?.createChatRoom()
+    }
+
+    suspend fun joinChatRoom() : Boolean{
+        return client?.joinChatRoom() == true
+    }
+
+    suspend fun goOutChatRoom(){
+        client?.goOutChatRoom()
+    }
 }

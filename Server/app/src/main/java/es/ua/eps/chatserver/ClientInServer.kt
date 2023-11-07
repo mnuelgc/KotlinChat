@@ -1,6 +1,7 @@
 package es.ua.eps.chatserver
 
 import android.graphics.Color
+import java.io.InputStream
 import java.net.Socket
 
 class ClientInServer internal constructor(
@@ -8,6 +9,7 @@ class ClientInServer internal constructor(
     private val socket : Socket) {
     private var name : String = ""
     private var color : Int = Int.MAX_VALUE
+    public var actualRoom : ChatRoom? = null
 
     public fun setName (name : String)
     {
@@ -32,6 +34,10 @@ class ClientInServer internal constructor(
 
     public fun getColor() : Int{
         return this.color
+    }
+
+    public fun getInputStream() : InputStream {
+        return socket.getInputStream()
     }
 
 }
