@@ -33,8 +33,6 @@ class ConversationActivity : AppCompatActivity() {
 
         SystemClient.setRootView(viewBinding.root)
 
-        println(SystemClient.getClient()?.DISCONNECT_CODE.toString())
-
         buttonDisconnet.setOnClickListener {
             lifecycleScope.launch(Dispatchers.IO) {
                 SystemClient.closeComunication()

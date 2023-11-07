@@ -15,6 +15,9 @@ import java.net.Socket
 import java.net.SocketException
 
 const val DISCONNECT_CODE : Int = 1616
+const val CREATE_CHAT_ROOM_CODE : Int = 2001
+const val JOIN_CHAT_ROOM_CODE : Int = 2002
+const val GO_OUT_CHAT_ROOM_CODE : Int = 2003
 
 class Server internal constructor(
     val serverIp_text : TextView,
@@ -31,8 +34,9 @@ class Server internal constructor(
 
     var salasDeChat = mutableMapOf<Int, ChatRoom>()
 
+    var lobbyRoom = ChatRoom(0, "Lobby")
 
-    private lateinit var serverSocket: ServerSocket
+        private lateinit var serverSocket: ServerSocket
     public var clients : ArrayList <Socket> = ArrayList<Socket>()
 
     public suspend fun initSocket() {
@@ -42,6 +46,7 @@ class Server internal constructor(
                     serverSocket =
                         ServerSocket(SocketServerPORT)
 
+                    salasDeChat.put(lobbyRoom.getId(),lobbyRoom)
                     withContext(Dispatchers.Main) {
                         serverIp_text.text = getIpAddress()
 
@@ -64,35 +69,28 @@ class Server internal constructor(
             val socket = serverSocket!!.accept()
 
             count++
-            message += """"#$count from ${socket.inetAddress}:${socket.port}"""
+            message += """#$count from ${socket.inetAddress}:${socket.port}"""
 
 
             withContext(Dispatchers.Main) {
                 serverInfo_text.text = message
             }
 
-            val client = ClientInServer(count, socket)
 
-            if (salasDeChat.count() == 0)
-            {
-                val salaActual = ChatRoom(0, "Sala de Pepe", client)
-                salasDeChat.put(salaActual.getId(), salaActual)
-            }
-            else{
-                val salaActual = salasDeChat.get(0)
-                salaActual?.clientGetIn(client)
-            }
-            val salaActual = salasDeChat.get(0)
+            val lobbyLocal = salasDeChat.get(0)
+            lobbyLocal!!.clientGetIn(ClientInServer(count, socket))
 
-            println("HAY ${salaActual?.howManyClients()} clientes")
+            salasDeChat.put(0, lobbyLocal)
+
+            message += "\nHAY ${lobbyLocal?.howManyClients()} clientes\n"
+            message += "HAY ${salasDeChat.count()} salas\n"
+
 
             socketServerReply(socket, null, 0, null)
             count++
 
             withContext(Dispatchers.Main) {
-                message += clients.count().toString() + "\n"
                 serverInfo_text.text = message
-
             }
         }
         catch (e: IOException) {
@@ -172,7 +170,7 @@ class Server internal constructor(
                                 if (clientMessage.last() == '\n') {
                                     clientMessage = clientMessage.dropLast(1)
                                 }
-                                parseClientMessage(clientMessage, socket, salaActual)
+                                parseClientMessage(clientMessage, socket, client, salaActual)
                                 clientMessage = ""
                                 byteArrayOutputStream.reset()
                             }
@@ -195,10 +193,19 @@ class Server internal constructor(
     suspend fun parseClientMessage(
         clientMessage: String,
         senderSocket: Socket,
+        client : ClientInServer,
         salaActual: ChatRoom?
     ){
         if (clientMessage.startsWith(DISCONNECT_CODE.toString())){
             disconnectClient(senderSocket)
+        }
+        else if (clientMessage.startsWith(CREATE_CHAT_ROOM_CODE.toString())) {
+            createNewChatRoom(clientMessage, client)
+        }
+        else if (clientMessage.startsWith(JOIN_CHAT_ROOM_CODE.toString())) {
+            joinToChatRoom(clientMessage, client)
+        }
+        else if (clientMessage.startsWith(GO_OUT_CHAT_ROOM_CODE.toString())) {
         }
         else{
             socketServerReply(senderSocket, salaActual,  9999999, clientMessage)
@@ -211,8 +218,8 @@ class Server internal constructor(
 
                 serverRunning = false
                 serverSocket.close()
-                clients.clear()
-
+                lobbyRoom.wipeRoom()
+                salasDeChat.clear()
                 serverPort_text.text = "Server Closed"
                 serverIp_text.text = "Server Closed"
                 serverInfo_text.text = ""
@@ -223,6 +230,30 @@ class Server internal constructor(
         }
     }
 
+    private suspend fun createNewChatRoom(clientMessage : String, client : ClientInServer)
+    {
+        val idSala = salasDeChat.count()
+        val salaActual = ChatRoom(idSala, clientMessage.removePrefix(CREATE_CHAT_ROOM_CODE.toString()), client)
+        salasDeChat.put(salaActual.getId(), salaActual)
+
+        message += "Chat room created\n"
+        message += "HAY ${salasDeChat.count()} salas\n"
+        withContext(Dispatchers.Main) {
+            serverInfo_text.text = message
+        }
+    }
+
+    private suspend fun joinToChatRoom(clientMessage: String, client : ClientInServer){
+        val salaActual = salasDeChat.get(1)
+        salaActual?.clientGetIn(client)
+        message += "Client join to room"
+        message += "HAY ${salaActual?.howManyClients()} clientes\n"
+
+        withContext(Dispatchers.Main) {
+            serverInfo_text.text = message
+        }
+
+    }
 
     private fun getIpAddress() : String {
         var ip = ""

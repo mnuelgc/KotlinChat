@@ -23,9 +23,12 @@ import java.io.Serializable
 import java.net.Socket
 import java.net.UnknownHostException
 
-class Client() : Serializable {
-    val DISCONNECT_CODE : Int = 1616
+const val DISCONNECT_CODE : Int = 1616
+const val CREATE_CHAT_ROOM_CODE : Int = 2001
+const val JOIN_CHAT_ROOM_CODE : Int = 2002
+const val GO_OUT_CHAT_ROOM_CODE : Int = 2003
 
+class Client() : Serializable {
     var dstAddress :String?=""
     var dsPort = 0
 
@@ -109,6 +112,17 @@ class Client() : Serializable {
     {
         sendMessageToServer(DISCONNECT_CODE.toString())
         isConnectedToServer = false
+    }
+
+    suspend fun createChatRoom(){
+        val createRoomMessage = "${CREATE_CHAT_ROOM_CODE}SALA de fiesta"
+        sendMessageToServer(createRoomMessage)
+    }
+
+    suspend fun joinChatRoom() : Boolean{
+        val createRoomMessage = "${JOIN_CHAT_ROOM_CODE}"
+        sendMessageToServer(createRoomMessage)
+        return true
     }
 
     suspend fun writeResponse(rootView : View){

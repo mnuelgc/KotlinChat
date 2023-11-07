@@ -3,14 +3,14 @@ package es.ua.eps.chatserver
 import android.graphics.Color
 
 const val MAX_CLIENTS = 5
-class ChatRoom(id : Int, name : String, creator : ClientInServer){
+class ChatRoom{
     private val id : Int
     private val clientsInRoom : ArrayList<ClientInServer>
     private var name : String
     private var isActive : Boolean
     private var colorsInGroup : ArrayList<Int>
 
-    init{
+    /*init{
         this.id = id
         this.clientsInRoom = ArrayList<ClientInServer>()
         this.clientsInRoom.add(creator)
@@ -24,6 +24,31 @@ class ChatRoom(id : Int, name : String, creator : ClientInServer){
         colorsInGroup.add(Color.parseColor("#F000F0"))
 
     }
+    */
+
+    constructor(id: Int, name: String){
+        this.id = id
+        this.name = name
+        this.clientsInRoom = ArrayList<ClientInServer>()
+        isActive = true
+        colorsInGroup = ArrayList<Int>()
+    }
+    constructor(id: Int, name: String, creator : ClientInServer)
+    {
+        this.id = id
+        this.clientsInRoom = ArrayList<ClientInServer>()
+        this.clientsInRoom.add(creator)
+        this.name = name
+        isActive = true
+        colorsInGroup = ArrayList<Int>()
+        colorsInGroup.add(Color.parseColor("#FF0000"))
+        colorsInGroup.add(Color.parseColor("#FFFF00"))
+        colorsInGroup.add(Color.parseColor("#FF00FF"))
+        colorsInGroup.add(Color.parseColor("#00FFFF"))
+        colorsInGroup.add(Color.parseColor("#F000F0"))
+
+        creator.setColor(colorsInGroup.last())
+    }
 
     fun getId() : Int{
         return id
@@ -34,6 +59,10 @@ class ChatRoom(id : Int, name : String, creator : ClientInServer){
 
     fun clientGetIn(client : ClientInServer) : Boolean{
 
+        if (this.id == 0){
+            clientsInRoom.add(client)
+            return true
+        }
         if (clientsInRoom.count() < MAX_CLIENTS)
         {
             val color = colorsInGroup.last()
@@ -63,6 +92,11 @@ class ChatRoom(id : Int, name : String, creator : ClientInServer){
 
     fun getClients () :  ArrayList<ClientInServer>{
         return clientsInRoom
+    }
+
+    fun wipeRoom()
+    {
+        clientsInRoom.clear()
     }
 
 }
