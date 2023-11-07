@@ -73,16 +73,27 @@ class Server internal constructor(
 
             val client = ClientInServer(count, socket)
 
+            var salaActual :ChatRoom? = null
             if (salasDeChat.count() == 0)
             {
-                val salaActual = ChatRoom(0, "Sala de Pepe", client)
-                salasDeChat.put(salaActual.getId(), salaActual)
+                salaActual = ChatRoom(0, "Sala de Pepe", client)
+                salasDeChat[salaActual.getId()] = salaActual
             }
-            else{
-                val salaActual = salasDeChat.get(0)
+            else if(salasDeChat.count() == 1) {
+                if (salasDeChat.get(0)?.getClients()?.count() == 1) {
+                    salaActual = salasDeChat.get(0)
+                    salaActual?.clientGetIn(client)
+
+                }else{
+                    salaActual = ChatRoom(1, "Sala de Juan", client)
+                    salasDeChat[salaActual.getId()] = salaActual
+                }
+            }
+            else if(salasDeChat.count() == 2) {
+                salaActual = salasDeChat.get(1)
                 salaActual?.clientGetIn(client)
             }
-            val salaActual = salasDeChat.get(0)
+
 
             println("HAY ${salaActual?.howManyClients()} clientes")
 
