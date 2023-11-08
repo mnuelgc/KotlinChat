@@ -27,6 +27,8 @@ const val DISCONNECT_CODE : Int = 1616
 const val CREATE_CHAT_ROOM_CODE : Int = 2001
 const val JOIN_CHAT_ROOM_CODE : Int = 2002
 const val GO_OUT_CHAT_ROOM_CODE : Int = 2003
+const val ASK_FOR_CHATS_ROOM_CODE : Int = 2004
+
 
 class Client() : Serializable {
 
@@ -128,6 +130,11 @@ class Client() : Serializable {
     suspend fun goOutChatRoom() {
         val quitRoomMessage = "${GO_OUT_CHAT_ROOM_CODE}"
         sendMessageToServer(quitRoomMessage)
+    }
+
+    suspend fun askForChatRoomList (){
+        val askForChatRoomList = "${ASK_FOR_CHATS_ROOM_CODE}"
+        sendMessageToServer(askForChatRoomList)
     }
 
     suspend fun writeResponse(rootView : View){

@@ -19,6 +19,7 @@ const val DISCONNECT_CODE: Int = 1616
 const val CREATE_CHAT_ROOM_CODE: Int = 2001
 const val JOIN_CHAT_ROOM_CODE: Int = 2002
 const val GO_OUT_CHAT_ROOM_CODE: Int = 2003
+const val ASK_FOR_CHATS_ROOM_CODE : Int = 2004
 
 class Server internal constructor(
     val serverIp_text: TextView,
@@ -281,7 +282,9 @@ class Server internal constructor(
         message += "Client join to room ${salaActual?.getName()}"
         message += "HAY ${salaActual?.howManyClients()} clientes\n"
 
+        message += salaActual.dataToTextFormat() + "\n"
         withContext(Dispatchers.Main) {
+            serverInfo_text.text = message + "\n"
             serverInfo_text.text = message
         }
 

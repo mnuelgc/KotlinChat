@@ -7,7 +7,7 @@ import java.net.Socket
 class ClientInServer internal constructor(
     private val id : Int,
     private val socket : Socket) {
-    private var name : String = ""
+    private var name : String = "Pedro"
     private var color : Int = Int.MAX_VALUE
     public var actualRoom : ChatRoom? = null
 
@@ -38,6 +38,17 @@ class ClientInServer internal constructor(
 
     public fun getInputStream() : InputStream {
         return socket.getInputStream()
+    }
+
+    public fun dataToTextFormat() : String {
+        var dataText = ""
+
+        dataText += "CLIENT_ID${this.id.toString()}"
+        dataText += "CLIENT_NAME${this.name}"
+        dataText += "CLIENT_COLOR_IN_GROUP${this.color.toString()}"
+        dataText += "ACTUAL_CHATROOM${this.actualRoom?.getId().toString()}"
+
+        return dataText
     }
 
 }
