@@ -20,6 +20,7 @@ const val CREATE_CHAT_ROOM_CODE: Int = 2001
 const val JOIN_CHAT_ROOM_CODE: Int = 2002
 const val GO_OUT_CHAT_ROOM_CODE: Int = 2003
 const val ASK_FOR_CHATS_ROOM_CODE : Int = 2004
+const val GIVE_CHATS_ROOM_CODE : Int = 2005
 
 class Server internal constructor(
     val serverIp_text: TextView,
@@ -130,20 +131,31 @@ class Server internal constructor(
         if (respon != null) msgReply = "$respon"
     //    else msgReply = "Estás en la sala $cnt \n"
         try {
-            if (salaActual != null) {
-                for (cliente in salaActual.getClients()) {
-                    val socket = cliente.getSocket()
-                    if (cliente.getSocket() != client.getSocket()) {
-                        outputStream = socket.getOutputStream()
-                        val printWriter = PrintWriter(outputStream)
-                        printWriter.write(msgReply)
-                        printWriter.flush()
+            if (respon?.startsWith(GIVE_CHATS_ROOM_CODE.toString())== true)
+            {
+                val socket = client.getSocket()
+                outputStream = socket.getOutputStream()
+                val printWriter = PrintWriter(outputStream)
+                printWriter.write(msgReply)
+                printWriter.flush()
 
-                        message += "replayed: $msgReply\n"
+                message += "replayed: $msgReply\n"
+            }
+            else {
+                if (salaActual != null) {
+                    for (cliente in salaActual.getClients()) {
+                        val socket = cliente.getSocket()
+                        if (cliente.getSocket() != client.getSocket()) {
+                            outputStream = socket.getOutputStream()
+                            val printWriter = PrintWriter(outputStream)
+                            printWriter.write(msgReply)
+                            printWriter.flush()
+
+                            message += "replayed: $msgReply\n"
+                        }
                     }
-                }
-            } else {
-                /*  outputStream = hostThreadSocket.getOutputStream()
+                } else {
+                    /*  outputStream = hostThreadSocket.getOutputStream()
                   val printWriter = PrintWriter(outputStream)
                   printWriter.write(msgReply)
                   printWriter.flush()
@@ -151,6 +163,7 @@ class Server internal constructor(
                   message += "replayed: $msgReply"
 
                  */
+                }
             }
 
 
@@ -230,7 +243,8 @@ class Server internal constructor(
             joinToChatRoom(clientMessage, client)
         } else if (clientMessage.startsWith(GO_OUT_CHAT_ROOM_CODE.toString())) {
             goOutChatRoom(clientMessage, client)
-
+        } else if (clientMessage.startsWith(ASK_FOR_CHATS_ROOM_CODE.toString())) {
+            giveChatRooms(clientMessage, client)
         } else {
             socketServerReply(client, 9999999, clientMessage)
         }
@@ -306,6 +320,26 @@ class Server internal constructor(
             serverInfo_text.text = message
         }
     }
+
+    private suspend fun giveChatRooms(
+        clientMessage: String,
+        client: ClientInServer
+    ) {
+        var chatsRoomList = "$GIVE_CHATS_ROOM_CODE~NUM_SALAS${salasDeChat.count() - 1}~"
+        for(i in 0 until salasDeChat.count()){
+            if (i != 0)
+            {
+                chatsRoomList+= "{"
+
+                chatsRoomList += salasDeChat[i]?.minimaldataToTextFormat()
+                chatsRoomList+= "}~"
+
+            }
+        }
+        socketServerReply(client, 0, chatsRoomList)
+
+    }
+
 
 
     private fun getIpAddress(): String {

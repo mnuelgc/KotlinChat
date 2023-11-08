@@ -44,7 +44,7 @@ class MainActivity : AppCompatActivity() {
         buttonDisconnet = viewBinding.buttonDisconnect
 
         //editTextAddress.setText("192.168.1.46")
-        editTextAddress.setText("172.20.10.5")
+        editTextAddress.setText("172.20.10.10")
         editTextPort.setText("8080")
 
         myClient = Client()

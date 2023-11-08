@@ -100,16 +100,34 @@ class ChatRoom {
         var dataToText = ""
 
         dataToText += "CHAT_ID${this.id.toString()}"
-        for (client in this.clientsInRoom) {
-            dataToText += "CLIENTS_IN_CHAT${client.dataToTextFormat()}"
+        dataToText += "CLIENTS{"
+        for (i in 0 until this.clientsInRoom.count()) {
+            dataToText += "CLIENT$i/${clientsInRoom[i].dataToTextFormat()}"
+            if(i != this.clientsInRoom.count() -1)
+                dataToText += ";;"
         }
+        dataToText+= "}"
         dataToText += "IS_ACTIVE${this.isActive.toString()}"
-        for (color in this.colorsInGroup) {
-            dataToText += "COLORS_AVAIBLE" + color.toString() + "\n"
+        dataToText += "COLORS{"
+
+        for (i in 0 until this.colorsInGroup.count()) {
+            dataToText += "COLOR$i/${colorsInGroup[i].toString()}"
+            if(i != this.colorsInGroup.count() -1)
+                dataToText += ";;"
         }
+        dataToText+= "}"
+        dataToText+= ";;"
 
         return dataToText
     }
+
+    public fun minimaldataToTextFormat(): String {
+        var minimalDataToText = ""
+        minimalDataToText += "ID_SALA$id~"
+        minimalDataToText += "NAME_SALA$name"
+        return minimalDataToText
+    }
+
 
 
 }

@@ -57,4 +57,12 @@ object SystemClient {
     suspend fun goOutChatRoom(){
         client?.goOutChatRoom()
     }
+
+    suspend fun askForChatRoomList(){
+        client?.askForChatRoomList()
+    }
+
+    suspend fun waitResponseFromServer(){
+        //client?.waitResponseFromServer()
+    }
 }

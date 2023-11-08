@@ -12,6 +12,7 @@ import es.ua.eps.clientserver.databinding.ActivityMainBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class HomeActivity : AppCompatActivity() {
 
@@ -22,6 +23,8 @@ class HomeActivity : AppCompatActivity() {
 
     var createChatCorroutine: Job? = null
     var joinChatCorroutine: Job? = null
+
+    var askChatRoomsCorroutine: Job? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,6 +49,22 @@ class HomeActivity : AppCompatActivity() {
         }
 
         buttonJoin.setOnClickListener {
+            askChatRoomsCorroutine = lifecycleScope.launch(Dispatchers.IO) {
+                SystemClient.askForChatRoomList()
+            }
+
+            lifecycleScope.launch(Dispatchers.Main) {
+                SystemClient.setRootView(viewBinding.root)
+                askChatRoomsCorroutine!!.join()
+                withContext(Dispatchers.IO) {
+                    while (SystemChatRoomList.mutableMap.count() == 0){}
+                }
+
+                val intentOpenChat =
+                    Intent(this@HomeActivity, ChatRoomListActivity::class.java)
+                startActivity(intentOpenChat)
+            }
+            /*
             var joined: Boolean
             joined = false
             joinChatCorroutine = lifecycleScope.launch(Dispatchers.IO) {
@@ -60,6 +79,7 @@ class HomeActivity : AppCompatActivity() {
                     startActivity(intentOpenChat)
                 }
             }
+            */
         }
     }
 }
