@@ -12,10 +12,13 @@ import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import java.io.PrintWriter
+import java.math.BigInteger
 import java.net.NetworkInterface
 import java.net.ServerSocket
 import java.net.Socket
 import java.net.SocketException
+import java.security.MessageDigest
+import java.security.NoSuchAlgorithmException
 
 const val CONNECT_CODE : Int = 1515
 const val DISCONNECT_CODE: Int = 1616
@@ -373,6 +376,23 @@ class Server internal constructor(
         val message = messageFragments[1]
         val newMessage = "${CLIENT_COMUNICATION_MESSAGE_CODE}$user~${client.getColor()}~$message"
         socketServerReply(client, newMessage)
+
+    }
+
+    fun getSHA(key: String): String? {
+        try {
+            val md = MessageDigest.getInstance("SHA-256")
+            val messageDigest = md.digest(key.toByteArray())
+            val num = BigInteger(1, messageDigest)
+            var hashText = num.toString(16)
+            while (hashText.length < 32) {
+               // hashText = “0$hashText”
+            }
+            return hashText
+        } catch (ex: NoSuchAlgorithmException) {
+            println("Exception Occured: ${ex.message}")
+            return null
+        }
     }
 
 

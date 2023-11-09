@@ -5,7 +5,7 @@
     <corners android:radius="20dp"/>
     <gradient
         android:type="linear"
-        android:startColor="@color/green"
-        android:endColor="#FFFFFF"/>
+        android:startColor="#FFFFFF"
+        android:endColor="@color/green" />
 </shape>
 <!-- elemento drawable que dibuje un marco de 5 dp de grosor, en color azul y con esquinas redondeadas.-->

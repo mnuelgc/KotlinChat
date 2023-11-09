@@ -5,13 +5,16 @@ import android.graphics.Color
 import android.os.Message
 import android.os.Parcel
 import android.os.Parcelable
+import android.security.keystore.KeyProperties
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import es.ua.eps.clientserver.databinding.ActivityConversationBinding
 import es.ua.eps.clientserver.databinding.ActivityMainBinding
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import java.io.BufferedReader
@@ -22,11 +25,18 @@ import java.io.OutputStream
 import java.io.PrintStream
 import java.io.PrintWriter
 import java.io.Serializable
+import java.lang.Exception
 import java.net.Socket
 import java.net.UnknownHostException
+import java.security.MessageDigest
+import javax.crypto.Cipher
+import javax.crypto.SecretKey
+import javax.crypto.spec.SecretKeySpec
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.math.absoluteValue
 
-const val CONNECT_CODE : Int = 1515
+const val CONNECT_CODE: Int = 1515
 const val DISCONNECT_CODE: Int = 1616
 const val CREATE_CHAT_ROOM_CODE: Int = 2001
 const val JOIN_CHAT_ROOM_CODE: Int = 2002
@@ -34,7 +44,7 @@ const val GO_OUT_CHAT_ROOM_CODE: Int = 2003
 const val ASK_FOR_CHATS_ROOM_CODE: Int = 2004
 const val RECIVE_CHATS_ROOM_CODE: Int = 2005
 
-const val CLIENT_COMUNICATION_MESSAGE_CODE : Int = 3001
+const val CLIENT_COMUNICATION_MESSAGE_CODE: Int = 3001
 
 
 class Client() : Serializable {
@@ -53,7 +63,7 @@ class Client() : Serializable {
 
     var messagesInList = 0
 
-    init{
+    init {
         clientColor.add(Color.parseColor("#FF0000"))
         clientColor.add(Color.parseColor("#FFFF00"))
         clientColor.add(Color.parseColor("#FF00FF"))
@@ -69,7 +79,7 @@ class Client() : Serializable {
         dsPort = port
     }
 
-    suspend fun connectClientToServer(userName : String) {
+    suspend fun connectClientToServer(userName: String) {
         withContext(Dispatchers.IO) {
             if (!isConnectedToServer) {
                 try {
@@ -123,19 +133,24 @@ class Client() : Serializable {
                 || message.startsWith(CREATE_CHAT_ROOM_CODE.toString())
                 || message.startsWith(JOIN_CHAT_ROOM_CODE.toString())
                 || message.startsWith(GO_OUT_CHAT_ROOM_CODE.toString())
-                || message.startsWith(RECIVE_CHATS_ROOM_CODE.toString())) {
+                || message.startsWith(RECIVE_CHATS_ROOM_CODE.toString())
+            ) {
                 val writer: PrintWriter = PrintWriter(socket!!.getOutputStream(), true)
                 writer.println(message)
                 writer.flush()
-            }
-            else {
+            } else {
+                val messageCrypted = encryptMessage(message, "encriptadito")
+
+                //val mesageToSend = "$CLIENT_COMUNICATION_MESSAGE_CODE$name~$messageCrypted"
                 val mesageToSend = "$CLIENT_COMUNICATION_MESSAGE_CODE$name~$message"
                 val writer: PrintWriter = PrintWriter(socket!!.getOutputStream(), true)
+
                 writer.println(mesageToSend)
                 writer.flush()
                 withContext(Dispatchers.Main) {
-                    val chatSpaceView = parentView?.findViewById<ChatSpaceView>(R.id.chatSpace)
-                    chatSpaceView?.appendDialog(message, 0,5, null)
+                    val msgproba = decryptMessage(messageCrypted, "encriptadito")
+                        val chatSpaceView = parentView?.findViewById<ChatSpaceView>(R.id.chatSpace)
+                    chatSpaceView?.appendDialog(message, 0, 5, null)
                 }
             }
         }
@@ -146,12 +161,12 @@ class Client() : Serializable {
         isConnectedToServer = false
     }
 
-    suspend fun createChatRoom(roomName : String) {
+    suspend fun createChatRoom(roomName: String) {
         val createRoomMessage = "${CREATE_CHAT_ROOM_CODE}$roomName"
         sendMessageToServer(createRoomMessage)
     }
 
-    suspend fun joinChatRoom(chatRoomId : Int): Boolean {
+    suspend fun joinChatRoom(chatRoomId: Int): Boolean {
         val joinRoomMessage = "${JOIN_CHAT_ROOM_CODE}$chatRoomId"
         sendMessageToServer(joinRoomMessage)
         return true
@@ -174,7 +189,7 @@ class Client() : Serializable {
         //delay(2000)
     }
 
-    fun parseChatRooms(message: String){
+    fun parseChatRooms(message: String) {
         //2005~NUM_SALAS2~{ID_SALA1~NAME_SALANombre}{ID_SALA2~NAME_SALANombre}
         var mes = message.substringAfter("$RECIVE_CHATS_ROOM_CODE~")
         val numSalas = mes.substringAfter("NUM_SALAS")
@@ -198,6 +213,7 @@ class Client() : Serializable {
             }
         }
     }
+
     suspend fun parseMessage(message: String) {
         if (message.startsWith(RECIVE_CHATS_ROOM_CODE.toString())) {
             parseChatRooms(message)
@@ -207,7 +223,7 @@ class Client() : Serializable {
         }
     }
 
-    suspend fun writeResponse(message : String, rootView: View) {
+    suspend fun writeResponse(message: String, rootView: View) {
         withContext(Dispatchers.Main) {
             writeDialog(message, rootView)
         }
@@ -230,8 +246,8 @@ class Client() : Serializable {
             var messagFragments = message?.split("~")
             val userName = messagFragments?.get(0)
             val color = messagFragments?.get(1)?.toInt()
-            val newMessage = messagFragments?.get(2)
-            chatSpaceView.appendDialog(newMessage!!, 1, color!!, userName)
+            val messageDecrypted = decryptMessage(messagFragments?.get(2)!!, "encriptadito")
+            chatSpaceView.appendDialog(messagFragments?.get(2)!!, 1, color!!, userName)
         }
     }
 
@@ -240,8 +256,79 @@ class Client() : Serializable {
         parentView = newRootView
     }
 
-    companion object{
-        var clientColor = mutableListOf <Int>()
+    companion object {
+        var clientColor = mutableListOf<Int>()
+    }
+    fun decryptMessage(encryptedMessage: String, key: String): String {
+        try {
+            val cipher = Cipher.getInstance("AES")
+            val secretKey = generateKey(key)
+            cipher.init(Cipher.DECRYPT_MODE, secretKey)
+            val encryptedBytes = encryptedMessage.toByteArray(Charsets.UTF_8)
+            val decryptedBytes = cipher.doFinal(encryptedBytes)
+            return String(decryptedBytes, Charsets.UTF_8)
+        } catch (e: Exception) {
+            println(e.stackTrace)
+            return "Error al desencriptar el mensaje"
+        }
+    }
 
+/*
+    fun desencryptMessage(messageEncrypted: String) : String {
+        var messageDencrypted: String = ""
+        val key = "encriptadito"
+        try {
+            val cipher = Cipher.getInstance("AES")
+            val secretKey = generatekey(key)
+            cipher.init(Cipher.DECRYPT_MODE, secretKey)
+            val messageEncriptedBytes: ByteArray = cipher.doFinal(messageEncrypted.toByteArray())
+            messageDencrypted = buildString(messageEncriptedBytes)
+
+            return messageDencrypted
+
+        } catch (e: Exception) {
+            messageDencrypted = messageEncrypted
+            println(e.stackTrace)
+        }
+        return messageDencrypted
+    }
+*/
+    private fun buildString(text: ByteArray): String{
+        val sb = StringBuilder()
+        for (char in text) {
+            sb.append(char.toInt().toChar())
+        }
+        return sb.toString()
+    }
+    fun encryptMessage(message: String, key: String): String {
+        var messageEncripted: String = ""
+
+    try {
+        val cipher = Cipher.getInstance("AES")
+        val secretKey = generateKey(key)
+        cipher.init(Cipher.ENCRYPT_MODE, secretKey)
+        val messageEncriptedBytes: ByteArray = cipher.doFinal(message.toByteArray())
+
+        messageEncripted = messageEncriptedBytes.toString(Charsets.UTF_8)
+
+        return decryptMessage(messageEncripted, key)
+
+        }catch (e : Exception)
+        {
+            messageEncripted = "Error al encriptar el mensaje"
+            println(e.stackTrace)
+        }
+        return messageEncripted
+    }
+
+    @Throws(Exception::class)
+    fun generateKey(key : String) :SecretKeySpec{
+        val sha = MessageDigest.getInstance("SHA-256")
+        var keyBytes = key.toByteArray(Charsets.UTF_8)
+
+        keyBytes = sha.digest(keyBytes)
+
+        val secretKey = SecretKeySpec(keyBytes, "AES")
+        return secretKey
     }
 }
