@@ -4,47 +4,71 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    tools:context=".MainActivity"
+    android:background="@drawable/round_border_frame_main">
 
 
     <EditText
         android:hint="UserName"
+        android:gravity="center"
         android:id="@+id/userName"
-        android:layout_marginTop="50dp"
+        android:layout_margin="50dp"
+        android:padding="15dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        />
+        android:background="@drawable/round_border_frame"/>
 
-    <EditText
-        android:hint="Address"
-        android:id="@+id/editTextAdress"
+    <LinearLayout
+        android:layout_marginTop="50dp"
+        android:layout_marginStart="25dp"
+        android:layout_marginEnd="25dp"
+        android:padding="25dp"
+        android:background="@drawable/round_border_frame"
+        android:orientation="horizontal"
+        android:id="@+id/layoutMain"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:layout_constraintTop_toBottomOf="@id/userName"
-        app:layout_constraintStart_toStartOf="parent"
-        />
+        app:layout_constraintStart_toStartOf="parent" >
 
-    <EditText
-        android:hint="Port"
-        android:id="@+id/editTextPort"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@id/editTextAdress"
-        app:layout_constraintStart_toStartOf="parent"        />
+        <EditText
+            android:hint="Address"
+            android:id="@+id/editTextAdress"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:layout_marginEnd="5dp"/>
 
+        <EditText
+            android:hint="Port"
+            android:id="@+id/editTextPort"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:layout_marginStart="5dp"
+            />
+    </LinearLayout>
     <Button
         android:id="@+id/buttonConnect"
         android:text="Connect"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@id/editTextPort"
+        android:layout_marginStart="50dp"
+        android:layout_marginEnd="50dp"
+        app:layout_constraintTop_toBottomOf="@id/layoutMain"
         app:layout_constraintStart_toStartOf="parent"
-        android:layout_marginTop="25dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:backgroundTint="@color/red"
+        android:textColor="@color/black"
+        android:textStyle="bold"
+        android:textSize="50sp"
         />
 
-
+<!--
     <Button
         android:id="@+id/buttonDisconnect"
         android:text="Disconnect"
@@ -55,6 +79,6 @@
         android:layout_marginTop="25dp"
         />
 
-
+-->
 
 </androidx.constraintlayout.widget.ConstraintLayout>

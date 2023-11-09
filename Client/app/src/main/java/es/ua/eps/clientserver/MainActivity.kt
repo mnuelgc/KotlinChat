@@ -24,7 +24,7 @@ class MainActivity : AppCompatActivity() {
     lateinit var editTextPort: EditText
 
     lateinit var buttonConnect: Button
-    lateinit var buttonDisconnet: Button
+    //lateinit var buttonDisconnet: Button
 
 
     lateinit var myClient: Client
@@ -39,7 +39,7 @@ class MainActivity : AppCompatActivity() {
         editTextPort = viewBinding.editTextPort
 
         buttonConnect = viewBinding.buttonConnect
-        buttonDisconnet = viewBinding.buttonDisconnect
+        //  buttonDisconnet = viewBinding.buttonDisconnect
 
         editTextAddress.setText("192.168.1.47")
         //editTextAddress.setText("172.20.10.5")
@@ -49,8 +49,9 @@ class MainActivity : AppCompatActivity() {
 
         buttonConnect.setOnClickListener {
             if (editTextUserName.text.toString() != ""
-                    && editTextAddress.text.toString() != ""
-                    && editTextPort.text.toString() != "") {
+                && editTextAddress.text.toString() != ""
+                && editTextPort.text.toString() != ""
+            ) {
                 myClient.setAddress(editTextAddress.text.toString())
                 myClient.setPort(editTextPort.text.toString().toInt())
 
@@ -74,14 +75,11 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
-
-        buttonDisconnet.setOnClickListener {
-            lifecycleScope.launch(Dispatchers.IO) {
-                SystemClient.closeComunication()
-             //   SystemClient.writeResponse(null,viewBinding.root)
-            }
-        }
-
-
     }
 }
+/*    buttonDisconnet.setOnClickListener {
+    lifecycleScope.launch(Dispatchers.IO) {
+        SystemClient.closeComunication()
+     //   SystemClient.writeResponse(null,viewBinding.root)
+    }
+}*/
