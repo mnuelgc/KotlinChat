@@ -1,6 +1,7 @@
 package es.ua.eps.chatserver
 
 import android.content.Context
+import android.graphics.Color
 import android.widget.TextView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -55,6 +56,12 @@ class Server internal constructor(
 
                     var lobbyRoom = ChatRoom(0, "Lobby")
                     salasDeChat[0] = lobbyRoom
+
+                    serverColors.add(Color.parseColor("#FF0000"))
+                    serverColors.add(Color.parseColor("#FFFF00"))
+                    serverColors.add(Color.parseColor("#FF00FF"))
+                    serverColors.add(Color.parseColor("#00FFFF"))
+                    serverColors.add(Color.parseColor("#F000F0"))
 
                     withContext(Dispatchers.Main) {
                         serverIp_text.text = getIpAddress()
@@ -364,7 +371,7 @@ class Server internal constructor(
         val messageFragments = messageWithoutCode.split("~")
         val user = messageFragments[0]
         val message = messageFragments[1]
-        val newMessage = "${CLIENT_COMUNICATION_MESSAGE_CODE}$user : $message"
+        val newMessage = "${CLIENT_COMUNICATION_MESSAGE_CODE}$user~${client.getColor()}~$message"
         socketServerReply(client, newMessage)
     }
 
@@ -393,5 +400,10 @@ class Server internal constructor(
         }
 
         return ip
+    }
+
+    companion object{
+        var serverColors = mutableListOf <Int>()
+
     }
 }

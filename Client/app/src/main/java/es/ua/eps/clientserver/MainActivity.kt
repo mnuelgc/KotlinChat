@@ -78,7 +78,7 @@ class MainActivity : AppCompatActivity() {
         buttonDisconnet.setOnClickListener {
             lifecycleScope.launch(Dispatchers.IO) {
                 SystemClient.closeComunication()
-                SystemClient.writeResponse(null,viewBinding.root)
+             //   SystemClient.writeResponse(null,viewBinding.root)
             }
         }
 

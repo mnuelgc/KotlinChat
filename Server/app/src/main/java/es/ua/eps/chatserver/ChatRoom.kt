@@ -9,14 +9,14 @@ class ChatRoom {
     private val clientsInRoom: ArrayList<ClientInServer>
     private var name: String
     private var isActive: Boolean
-    private var colorsInGroup: ArrayList<Int>
+    private var idColorsInGroup: ArrayList<Int>
 
     constructor(id: Int, name: String) {
         this.id = id
         this.name = name
         this.clientsInRoom = ArrayList<ClientInServer>()
         isActive = true
-        colorsInGroup = ArrayList<Int>()
+        idColorsInGroup = ArrayList<Int>()
     }
 
     constructor(id: Int, name: String, creator: ClientInServer) {
@@ -25,16 +25,12 @@ class ChatRoom {
         this.clientsInRoom.add(creator)
         this.name = name
         isActive = true
-        colorsInGroup = ArrayList<Int>()
-        colorsInGroup.add(Color.parseColor("#FF0000"))
-        colorsInGroup.add(Color.parseColor("#FFFF00"))
-        colorsInGroup.add(Color.parseColor("#FF00FF"))
-        colorsInGroup.add(Color.parseColor("#00FFFF"))
-        colorsInGroup.add(Color.parseColor("#F000F0"))
+        idColorsInGroup = ArrayList<Int>()
+        for (i in 0 ..< Server.serverColors.count()) { idColorsInGroup.add(i) }
 
-        var color = colorsInGroup.last()
+        var color = idColorsInGroup.first()
         creator.setColor(color)
-        colorsInGroup.remove(color)
+        idColorsInGroup.remove(color)
         creator.actualRoom = this
     }
 
@@ -59,10 +55,10 @@ class ChatRoom {
         }
         if (clientsInRoom.count() < MAX_CLIENTS) {
             client.actualRoom = this
-            val color = colorsInGroup.last()
+            val color = idColorsInGroup.first()
             client.setColor(color)
             clientsInRoom.add(client)
-            colorsInGroup.remove(color)
+            idColorsInGroup.remove(color)
 
             if (!isActive) isActive = true
             return true
@@ -75,7 +71,7 @@ class ChatRoom {
         clientsInRoom.remove(client)
 
         if (id != 0) {
-            colorsInGroup.add(client.getColor())
+            idColorsInGroup.add(client.getColor())
 
             if (clientsInRoom.isEmpty()) {
                 isActive = false
@@ -110,9 +106,9 @@ class ChatRoom {
         dataToText += "IS_ACTIVE${this.isActive.toString()}"
         dataToText += "COLORS{"
 
-        for (i in 0 until this.colorsInGroup.count()) {
-            dataToText += "COLOR$i/${colorsInGroup[i].toString()}"
-            if(i != this.colorsInGroup.count() -1)
+        for (i in 0 until this.idColorsInGroup.count()) {
+            dataToText += "COLOR$i/${idColorsInGroup[i].toString()}"
+            if(i != this.idColorsInGroup.count() -1)
                 dataToText += ";;"
         }
         dataToText+= "}"

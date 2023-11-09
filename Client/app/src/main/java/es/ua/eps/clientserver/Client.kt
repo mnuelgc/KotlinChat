@@ -53,6 +53,14 @@ class Client() : Serializable {
 
     var messagesInList = 0
 
+    init{
+        clientColor.add(Color.parseColor("#FF0000"))
+        clientColor.add(Color.parseColor("#FFFF00"))
+        clientColor.add(Color.parseColor("#FF00FF"))
+        clientColor.add(Color.parseColor("#00FFFF"))
+        clientColor.add(Color.parseColor("#F000F0"))
+    }
+
     public fun setAddress(address: String) {
         dstAddress = address
     }
@@ -127,7 +135,7 @@ class Client() : Serializable {
                 writer.flush()
                 withContext(Dispatchers.Main) {
                     val chatSpaceView = parentView?.findViewById<ChatSpaceView>(R.id.chatSpace)
-                    chatSpaceView?.appendDialog(message, 0)
+                    chatSpaceView?.appendDialog(message, 0,5, null)
                 }
             }
         }
@@ -219,12 +227,21 @@ class Client() : Serializable {
     suspend fun writeDialog(message: String?, rootView: View) {
         withContext(Dispatchers.Main) {
             var chatSpaceView = rootView.findViewById<ChatSpaceView>(R.id.chatSpace)
-            chatSpaceView.appendDialog(message!!, 1)
+            var messagFragments = message?.split("~")
+            val userName = messagFragments?.get(0)
+            val color = messagFragments?.get(1)?.toInt()
+            val newMessage = messagFragments?.get(2)
+            chatSpaceView.appendDialog(newMessage!!, 1, color!!, userName)
         }
     }
 
 
     fun setRootView(newRootView: View) {
         parentView = newRootView
+    }
+
+    companion object{
+        var clientColor = mutableListOf <Int>()
+
     }
 }

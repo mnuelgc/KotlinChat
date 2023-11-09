@@ -32,7 +32,7 @@ class ChatSpaceView : ScrollView {
 
 
     //From 0 to Client 1 from server
-    public fun appendDialog(message : String, from: Int){
+    public fun appendDialog(message : String, from: Int, color : Int, userName : String?){
         val dialog = createDialog(message, from)
 
         constraintLayout?.addView(dialog)
@@ -51,6 +51,20 @@ class ChatSpaceView : ScrollView {
                 set.connect(diag, TOP, lastId, BOTTOM)
             }
             lastId = diag
+        }
+
+        when(color)
+        {
+            0 -> dialog.changeToRed()
+            1 -> dialog.changeToCyan()
+            2 -> dialog.changeToYellow()
+            3 -> dialog.changeToPink()
+            4 -> dialog.changeToBlue()
+            5 -> dialog.changeToGreen()
+        }
+        if (userName != null)
+        {
+            dialog.setName(userName)
         }
         set.applyTo(constraintLayout)
 
