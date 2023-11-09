@@ -33,8 +33,7 @@ class SendableText : LinearLayout {
 
         button!!.setOnClickListener{
             GlobalScope.launch(Dispatchers.IO) {
-                //SystemClient.sendMessageToServer(text!!.text.toString())
-                SystemClient.askForChatRoomList()
+                SystemClient.sendMessageToServer(text!!.text.toString())
                 withContext(Dispatchers.Main) {
                     text!!.setText("")
                 }

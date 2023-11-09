@@ -20,8 +20,8 @@ object SystemClient {
         return client
     }
 
-    suspend fun connectClientToServer(){
-        client?.connectClientToServer()
+    suspend fun connectClientToServer(userName : String){
+        client?.connectClientToServer(userName)
     }
 
     suspend fun closeComunication()
@@ -29,9 +29,9 @@ object SystemClient {
         client?.closeComunication()
     }
 
-    suspend fun writeResponse(viewRoot : View)
+    suspend fun writeResponse(messageText: String?, viewRoot : View)
     {
-        client?.writeResponse(viewRoot)
+        client?.writeResponse(messageText!!, viewRoot)
     }
 
     suspend fun sendMessageToServer(messageText : String){
@@ -46,12 +46,12 @@ object SystemClient {
         return client?.isConnectedToServer == true
     }
 
-    suspend fun createChatRoom(){
-        client?.createChatRoom()
+    suspend fun createChatRoom(roomName : String){
+        client?.createChatRoom(roomName)
     }
 
-    suspend fun joinChatRoom() : Boolean{
-        return client?.joinChatRoom() == true
+    suspend fun joinChatRoom(chatRoomId : Int) : Boolean{
+        return client?.joinChatRoom(chatRoomId) == true
     }
 
     suspend fun goOutChatRoom(){

@@ -26,6 +26,7 @@ import java.net.Socket
 import java.net.UnknownHostException
 import kotlin.math.absoluteValue
 
+const val CONNECT_CODE : Int = 1515
 const val DISCONNECT_CODE: Int = 1616
 const val CREATE_CHAT_ROOM_CODE: Int = 2001
 const val JOIN_CHAT_ROOM_CODE: Int = 2002
@@ -33,9 +34,12 @@ const val GO_OUT_CHAT_ROOM_CODE: Int = 2003
 const val ASK_FOR_CHATS_ROOM_CODE: Int = 2004
 const val RECIVE_CHATS_ROOM_CODE: Int = 2005
 
+const val CLIENT_COMUNICATION_MESSAGE_CODE : Int = 3001
+
 
 class Client() : Serializable {
 
+    var name = ""
     var dstAddress: String? = ""
     var dsPort = 0
 
@@ -57,7 +61,7 @@ class Client() : Serializable {
         dsPort = port
     }
 
-    suspend fun connectClientToServer() {
+    suspend fun connectClientToServer(userName : String) {
         withContext(Dispatchers.IO) {
             if (!isConnectedToServer) {
                 try {
@@ -71,6 +75,8 @@ class Client() : Serializable {
                     if (socket != null) {
                         response = ""
                         isConnectedToServer = true
+                        sendMessageToServer("${CONNECT_CODE}${userName}")
+                        name = userName
                     }
 
                     while (true) { //Bucle de lectura de mensajes del server
@@ -83,49 +89,13 @@ class Client() : Serializable {
                         byteArrayOutputStream.write(buffer, 0, bytesRead)
                         response += byteArrayOutputStream.toString("UTF-8")
 
-                       // withContext(Dispatchers.IO) {
-                            if (parentView != null) {
-                                parseMessage(response!!)
-                                response = ""
-                                byteArrayOutputStream.reset()
-                            }
+                        // withContext(Dispatchers.IO) {
+                        if (parentView != null) {
+                            parseMessage(response!!)
+                            response = ""
+                            byteArrayOutputStream.reset()
+                        }
                         //}
-                    }
-
-                } catch (ex: UnknownHostException) {
-                    ex.printStackTrace()
-                } catch (ex: IOException) {
-                    ex.printStackTrace()
-                }
-            }
-        }
-    }
-
-    suspend fun waitResponseFromServer() {
-        withContext(Dispatchers.IO) {
-            if (isConnectedToServer) {
-                try {
-                    val byteArrayOutputStream = ByteArrayOutputStream(1024)
-                    val buffer = ByteArray(1024)
-                    var bytesRead: Int
-                    val inputStream = socket!!.getInputStream()
-                    val askForChatRoomList = "${ASK_FOR_CHATS_ROOM_CODE}"
-
-                    sendMessageToServer(askForChatRoomList)
-                    while (true) { //Bucle de lectura de mensajes del server
-                        bytesRead = inputStream.read(buffer)
-                        if (bytesRead == -1) {
-                            // Se ha llegado al final del flujo de entrada
-                            break
-                        }
-
-                        byteArrayOutputStream.write(buffer, 0, bytesRead)
-                        response += byteArrayOutputStream.toString("UTF-8")
-
-                        parseMessage(response!!)
-                        response = ""
-                        byteArrayOutputStream.reset()
-                        break
                     }
 
                 } catch (ex: UnknownHostException) {
@@ -139,12 +109,22 @@ class Client() : Serializable {
 
     suspend fun sendMessageToServer(message: String) {
         if (isConnectedToServer) {
-            val writer: PrintWriter = PrintWriter(socket!!.getOutputStream(), true)
-            writer.println(message)
-            writer.flush()
-            if (message.startsWith(ASK_FOR_CHATS_ROOM_CODE.toString())) {
-
-            } else {
+            if (message.startsWith(ASK_FOR_CHATS_ROOM_CODE.toString())
+                || message.startsWith(CONNECT_CODE.toString())
+                || message.startsWith(DISCONNECT_CODE.toString())
+                || message.startsWith(CREATE_CHAT_ROOM_CODE.toString())
+                || message.startsWith(JOIN_CHAT_ROOM_CODE.toString())
+                || message.startsWith(GO_OUT_CHAT_ROOM_CODE.toString())
+                || message.startsWith(RECIVE_CHATS_ROOM_CODE.toString())) {
+                val writer: PrintWriter = PrintWriter(socket!!.getOutputStream(), true)
+                writer.println(message)
+                writer.flush()
+            }
+            else {
+                val mesageToSend = "$CLIENT_COMUNICATION_MESSAGE_CODE$name~$message"
+                val writer: PrintWriter = PrintWriter(socket!!.getOutputStream(), true)
+                writer.println(mesageToSend)
+                writer.flush()
                 withContext(Dispatchers.Main) {
                     val chatSpaceView = parentView?.findViewById<ChatSpaceView>(R.id.chatSpace)
                     chatSpaceView?.appendDialog(message, 0)
@@ -158,13 +138,13 @@ class Client() : Serializable {
         isConnectedToServer = false
     }
 
-    suspend fun createChatRoom() {
-        val createRoomMessage = "${CREATE_CHAT_ROOM_CODE}SALA de fiesta"
+    suspend fun createChatRoom(roomName : String) {
+        val createRoomMessage = "${CREATE_CHAT_ROOM_CODE}$roomName"
         sendMessageToServer(createRoomMessage)
     }
 
-    suspend fun joinChatRoom(): Boolean {
-        val joinRoomMessage = "${JOIN_CHAT_ROOM_CODE}"
+    suspend fun joinChatRoom(chatRoomId : Int): Boolean {
+        val joinRoomMessage = "${JOIN_CHAT_ROOM_CODE}$chatRoomId"
         sendMessageToServer(joinRoomMessage)
         return true
     }
@@ -180,44 +160,48 @@ class Client() : Serializable {
 
             sendMessageToServer(askForChatRoomList)
         }
-       // val askForChatRoomList = "${ASK_FOR_CHATS_ROOM_CODE}"
+        // val askForChatRoomList = "${ASK_FOR_CHATS_ROOM_CODE}"
         //withContext(Dispatchers.IO){ waitResponseFromServer()}
-       // withContext(Dispatchers.IO){sendMessageToServer(askForChatRoomList)}
+        // withContext(Dispatchers.IO){sendMessageToServer(askForChatRoomList)}
         //delay(2000)
     }
 
+    fun parseChatRooms(message: String){
+        //2005~NUM_SALAS2~{ID_SALA1~NAME_SALANombre}{ID_SALA2~NAME_SALANombre}
+        var mes = message.substringAfter("$RECIVE_CHATS_ROOM_CODE~")
+        val numSalas = mes.substringAfter("NUM_SALAS")
+
+        var fragments = numSalas.split("~")
+
+        var num = fragments[0].toInt()
+        for (i in 1..<fragments.count() step 2) {
+            //  writeDialog(num.toString(), parentView!!)
+
+            if (fragments[i] != "") {
+                var idSala = fragments[i].substringAfter("{ID_SALA").toInt()
+                var nameSala = fragments[i + 1].substringAfter("NAME_SALA")
+                nameSala = nameSala.substringBefore("}")
+
+                // writeDialog(idSala.toString(), parentView!!)
+                //writeDialog(nameSala, parentView!!)
+
+                SystemChatRoomList.addRoom(idSala, nameSala)
+                //  writeDialog(fragments[i], parentView!!)
+            }
+        }
+    }
     suspend fun parseMessage(message: String) {
         if (message.startsWith(RECIVE_CHATS_ROOM_CODE.toString())) {
-            //2005~NUM_SALAS2~{ID_SALA1~NAME_SALANombre}{ID_SALA2~NAME_SALANombre}
-            var mes = message.substringAfter("$RECIVE_CHATS_ROOM_CODE~")
-            val numSalas = mes.substringAfter("NUM_SALAS")
-
-            var fragments = numSalas.split("~")
-
-            var num = fragments[0].toInt()
-            for (i in 1..<fragments.count() step 2) {
-                //  writeDialog(num.toString(), parentView!!)
-
-                if (fragments[i] != "") {
-                    var idSala = fragments[i].substringAfter("{ID_SALA").toInt()
-                    var nameSala = fragments[i + 1].substringAfter("NAME_SALA")
-                    nameSala = nameSala.substringBefore("}")
-
-                   // writeDialog(idSala.toString(), parentView!!)
-                    //writeDialog(nameSala, parentView!!)
-
-                    SystemChatRoomList.addRoom(idSala, nameSala)
-                  //  writeDialog(fragments[i], parentView!!)
-                }
-            }
-        } else {
-            writeResponse(parentView!!)
+            parseChatRooms(message)
+        } else if (message.startsWith(CLIENT_COMUNICATION_MESSAGE_CODE.toString())) {
+            val newMessage = message.removePrefix(CLIENT_COMUNICATION_MESSAGE_CODE.toString())
+            writeResponse(newMessage, parentView!!)
         }
     }
 
-    suspend fun writeResponse(rootView: View) {
+    suspend fun writeResponse(message : String, rootView: View) {
         withContext(Dispatchers.Main) {
-            writeDialog(response, rootView)
+            writeDialog(message, rootView)
         }
     }
 

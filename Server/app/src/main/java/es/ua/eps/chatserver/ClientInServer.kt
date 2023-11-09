@@ -7,7 +7,7 @@ import java.net.Socket
 class ClientInServer internal constructor(
     private val id : Int,
     private val socket : Socket) {
-    private var name : String = "Pedro"
+    private var name : String = "NoName"
     private var color : Int = Int.MAX_VALUE
     public var actualRoom : ChatRoom? = null
 

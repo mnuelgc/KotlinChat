@@ -19,8 +19,7 @@ class MainActivity : AppCompatActivity() {
 
     lateinit var viewBinding: ActivityMainBinding
 
-    lateinit var response: TextView
-
+    lateinit var editTextUserName: EditText
     lateinit var editTextAddress: EditText
     lateinit var editTextPort: EditText
 
@@ -35,8 +34,7 @@ class MainActivity : AppCompatActivity() {
         viewBinding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(viewBinding.root)
 
-        response = viewBinding.ServerResponse
-
+        editTextUserName = viewBinding.userName
         editTextAddress = viewBinding.editTextAdress
         editTextPort = viewBinding.editTextPort
 
@@ -44,19 +42,21 @@ class MainActivity : AppCompatActivity() {
         buttonDisconnet = viewBinding.buttonDisconnect
 
         //editTextAddress.setText("192.168.1.46")
-        editTextAddress.setText("172.20.10.10")
+        editTextAddress.setText("172.20.10.5")
         editTextPort.setText("8080")
 
         myClient = Client()
 
         buttonConnect.setOnClickListener {
-            if (editTextAddress.text.toString() != "" && editTextPort.text.toString() != "") {
+            if (editTextUserName.text.toString() != ""
+                    && editTextAddress.text.toString() != ""
+                    && editTextPort.text.toString() != "") {
                 myClient.setAddress(editTextAddress.text.toString())
                 myClient.setPort(editTextPort.text.toString().toInt())
 
                 SystemClient.setClient(myClient)
                 lifecycleScope.launch(Dispatchers.IO) {
-                    SystemClient.connectClientToServer()
+                    SystemClient.connectClientToServer(editTextUserName.text.toString())
                 }
 
                 GlobalScope.launch(Dispatchers.IO) {
@@ -78,7 +78,7 @@ class MainActivity : AppCompatActivity() {
         buttonDisconnet.setOnClickListener {
             lifecycleScope.launch(Dispatchers.IO) {
                 SystemClient.closeComunication()
-                SystemClient.writeResponse(viewBinding.root)
+                SystemClient.writeResponse(null,viewBinding.root)
             }
         }
 

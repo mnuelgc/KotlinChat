@@ -1,5 +1,6 @@
 package es.ua.eps.chatserver
 
+import android.content.Context
 import android.widget.TextView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -15,12 +16,16 @@ import java.net.ServerSocket
 import java.net.Socket
 import java.net.SocketException
 
+const val CONNECT_CODE : Int = 1515
 const val DISCONNECT_CODE: Int = 1616
+
 const val CREATE_CHAT_ROOM_CODE: Int = 2001
 const val JOIN_CHAT_ROOM_CODE: Int = 2002
 const val GO_OUT_CHAT_ROOM_CODE: Int = 2003
 const val ASK_FOR_CHATS_ROOM_CODE : Int = 2004
 const val GIVE_CHATS_ROOM_CODE : Int = 2005
+
+const val CLIENT_COMUNICATION_MESSAGE_CODE : Int = 3001
 
 class Server internal constructor(
     val serverIp_text: TextView,
@@ -108,7 +113,7 @@ class Server internal constructor(
 
             message += "HAY ${lobbyRoom.howManyClients()} clientes"
 
-            socketServerReply(client, 0, null)
+            socketServerReply(client, null)
 
             withContext(Dispatchers.Main) {
                 message += clients.count().toString() + "\n"
@@ -122,7 +127,6 @@ class Server internal constructor(
 
     private suspend fun socketServerReply(
         client: ClientInServer,
-        cnt: Int,
         respon: String?
     ) {
         var salaActual = client.actualRoom
@@ -131,7 +135,8 @@ class Server internal constructor(
         if (respon != null) msgReply = "$respon"
     //    else msgReply = "Estás en la sala $cnt \n"
         try {
-            if (respon?.startsWith(GIVE_CHATS_ROOM_CODE.toString())== true)
+            if (respon?.startsWith(CONNECT_CODE.toString())== true) { }
+            else if (respon?.startsWith(GIVE_CHATS_ROOM_CODE.toString())== true)
             {
                 val socket = client.getSocket()
                 outputStream = socket.getOutputStream()
@@ -208,6 +213,7 @@ class Server internal constructor(
                 bytesRead = inputStream.read(buffer)
 
                 if (bytesRead == -1) {
+                    break
                 }
                 byteArrayOutputStream.write(buffer, 0, bytesRead)
                 clientMessage += byteArrayOutputStream.toString("UTF-8")
@@ -215,11 +221,17 @@ class Server internal constructor(
                 if (clientMessage.last() == '\n') {
                     clientMessage = clientMessage.dropLast(1)
                 }
-                parseClientMessage(clientMessage, client)
+                parseClientMessage(client, clientMessage)
                 clientMessage = ""
                 byteArrayOutputStream.reset()
             }
         }
+    }
+
+    suspend fun connectClient(client : ClientInServer, clientMessage : String)
+    {
+        val clientName = clientMessage.substringAfter(CONNECT_CODE.toString())
+        client.setName(clientName)
     }
 
     suspend fun disconnectClient(client: ClientInServer) {
@@ -233,20 +245,24 @@ class Server internal constructor(
 
 
     suspend fun parseClientMessage(
-        clientMessage: String,
-        client: ClientInServer) {
-        if (clientMessage.startsWith(DISCONNECT_CODE.toString())) {
+
+        client: ClientInServer,
+        clientMessage: String) {
+        if (clientMessage.startsWith(CONNECT_CODE.toString())) {
+            connectClient(client, clientMessage)
+        }
+            if (clientMessage.startsWith(DISCONNECT_CODE.toString())) {
             disconnectClient(client)
         } else if (clientMessage.startsWith(CREATE_CHAT_ROOM_CODE.toString())) {
-            createNewChatRoom(clientMessage, client)
+            createNewChatRoom(client, clientMessage)
         } else if (clientMessage.startsWith(JOIN_CHAT_ROOM_CODE.toString())) {
-            joinToChatRoom(clientMessage, client)
+            joinToChatRoom(client, clientMessage)
         } else if (clientMessage.startsWith(GO_OUT_CHAT_ROOM_CODE.toString())) {
-            goOutChatRoom(clientMessage, client)
+            goOutChatRoom(client, clientMessage)
         } else if (clientMessage.startsWith(ASK_FOR_CHATS_ROOM_CODE.toString())) {
-            giveChatRooms(clientMessage, client)
-        } else {
-            socketServerReply(client, 9999999, clientMessage)
+            giveChatRooms(client, clientMessage)
+        } else if (clientMessage.startsWith(CLIENT_COMUNICATION_MESSAGE_CODE.toString())){
+            giveTheMessage(client, clientMessage)
         }
     }
 
@@ -270,7 +286,7 @@ class Server internal constructor(
         }
     }
 
-    private suspend fun createNewChatRoom(clientMessage: String, client: ClientInServer) {
+    private suspend fun createNewChatRoom(client: ClientInServer, clientMessage: String) {
         lobbyRoom.clientGoOut(client)
         salasDeChat[0] = lobbyRoom
         val idSala = salasDeChat.count()
@@ -286,10 +302,11 @@ class Server internal constructor(
 
     }
 
-    private suspend fun joinToChatRoom(clientMessage: String, client: ClientInServer) {
+    private suspend fun joinToChatRoom(client: ClientInServer, clientMessage: String) {
         lobbyRoom.clientGoOut(client)
         salasDeChat[0] = lobbyRoom
-        val salaActual = salasDeChat[salasDeChat.count() -1]
+        var roomId = clientMessage.substringAfter(JOIN_CHAT_ROOM_CODE.toString()).toInt()
+        val salaActual = salasDeChat[roomId]
         salaActual?.clientGetIn(client)
         salasDeChat[salaActual?.getId()!!] = salaActual
 
@@ -305,8 +322,8 @@ class Server internal constructor(
     }
 
     private suspend fun goOutChatRoom(
-        clientMessage: String,
-        client: ClientInServer
+        client: ClientInServer,
+        clientMessage: String
     ) {
         val chatRoom = client.actualRoom
         chatRoom!!.clientGoOut(client)
@@ -322,8 +339,8 @@ class Server internal constructor(
     }
 
     private suspend fun giveChatRooms(
-        clientMessage: String,
-        client: ClientInServer
+        client: ClientInServer,
+        clientMessage: String
     ) {
         var chatsRoomList = "$GIVE_CHATS_ROOM_CODE~NUM_SALAS${salasDeChat.count() - 1}~"
         for(i in 0 until salasDeChat.count()){
@@ -336,8 +353,19 @@ class Server internal constructor(
 
             }
         }
-        socketServerReply(client, 0, chatsRoomList)
+        socketServerReply(client,  chatsRoomList)
 
+    }
+    private suspend fun giveTheMessage(client: ClientInServer, clientMessage: String)
+    {
+        // MessageTipo
+        // 3001Perico~¿Hola Como estás?
+        val messageWithoutCode = clientMessage.removePrefix(CLIENT_COMUNICATION_MESSAGE_CODE.toString())
+        val messageFragments = messageWithoutCode.split("~")
+        val user = messageFragments[0]
+        val message = messageFragments[1]
+        val newMessage = "${CLIENT_COMUNICATION_MESSAGE_CODE}$user : $message"
+        socketServerReply(client, newMessage)
     }
 
 

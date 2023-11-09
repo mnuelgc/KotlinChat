@@ -7,13 +7,19 @@ import android.view.View
 import android.widget.AdapterView
 import android.widget.ListView
 import android.widget.TextView
+import androidx.lifecycle.lifecycleScope
 import es.ua.eps.clientserver.databinding.ActivityChatRoomListBinding
 import es.ua.eps.clientserver.databinding.ActivityHomeBinding
 import es.ua.eps.clientserver.databinding.ActivityMainBinding
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 
 class ChatRoomListActivity : AppCompatActivity() {
 
     lateinit var viewBinding: ActivityChatRoomListBinding
+
+    var joinChatCorroutine : Job? = null
 
     lateinit var list: ListView
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -25,7 +31,7 @@ class ChatRoomListActivity : AppCompatActivity() {
         list = viewBinding.list
 
         val rooms = mutableListOf<String>()
-        for (i in 0 ..SystemChatRoomList.mutableMap.size) { // sumar 1
+        for (i in 0 ..<SystemChatRoomList.mutableMap.size) { // sumar 1
             rooms.add(SystemChatRoomList.mutableMap[i]!!)
         }
 
@@ -34,17 +40,26 @@ class ChatRoomListActivity : AppCompatActivity() {
             R.layout.item_room, rooms
         )
 
-/*        list.adapter = adapter
+        list.adapter = adapter
 
-        val intentFilm = Intent(this@FilmListActivity, FilmDataActivity::class.java)
 
         list.setOnItemClickListener { parent: AdapterView<*>, view: View,
                                       position: Int, id: Long ->
 
-            intentFilm.putExtra(FilmDataActivity.EXTRA_FILM_ID, position)
-            startActivity(intentFilm)
-        }
-        */
+            var joined: Boolean
+            joined = false
+            joinChatCorroutine = lifecycleScope.launch(Dispatchers.IO) {
+                joined = SystemClient.joinChatRoom(position + 1)
+            }
 
+            lifecycleScope.launch(Dispatchers.Main) {
+                joinChatCorroutine!!.join()
+                if (joined) {
+                    val intentOpenChat =
+                        Intent(this@ChatRoomListActivity, ConversationActivity::class.java)
+                    startActivity(intentOpenChat)
+                }
+            }
+        }
     }
 }

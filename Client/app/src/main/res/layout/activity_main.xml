@@ -6,22 +6,23 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <TextView
-        android:id="@+id/ServerResponse"
-        android:layout_width="wrap_content"
+
+    <EditText
+        android:hint="UserName"
+        android:id="@+id/userName"
+        android:layout_marginTop="50dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Hello World!"
-        android:layout_marginTop="25dp"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        />
 
     <EditText
         android:hint="Address"
         android:id="@+id/editTextAdress"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@id/ServerResponse"
+        app:layout_constraintTop_toBottomOf="@id/userName"
         app:layout_constraintStart_toStartOf="parent"
         />
 

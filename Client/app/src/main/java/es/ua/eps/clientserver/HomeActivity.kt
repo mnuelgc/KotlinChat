@@ -21,9 +21,6 @@ class HomeActivity : AppCompatActivity() {
     lateinit var buttonCreate: Button
     lateinit var buttonJoin: Button
 
-    var createChatCorroutine: Job? = null
-    var joinChatCorroutine: Job? = null
-
     var askChatRoomsCorroutine: Job? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -37,15 +34,8 @@ class HomeActivity : AppCompatActivity() {
         buttonJoin = viewBinding.buttonJoin
 
         buttonCreate.setOnClickListener {
-            createChatCorroutine = lifecycleScope.launch(Dispatchers.IO) {
-                SystemClient.createChatRoom()
-            }
-
-            lifecycleScope.launch(Dispatchers.Main) {
-                createChatCorroutine!!.join()
-                val intentOpenChat = Intent(this@HomeActivity, ConversationActivity::class.java)
-                startActivity(intentOpenChat)
-            }
+                val intentCreateChatRoom = Intent(this@HomeActivity, CreateChatRoomActivity::class.java)
+                startActivity(intentCreateChatRoom)
         }
 
         buttonJoin.setOnClickListener {
