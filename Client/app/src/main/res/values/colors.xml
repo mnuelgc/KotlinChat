@@ -2,10 +2,18 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="blue">#7777FF</color>
-    <color name="red">#FF7777</color>
-    <color name="green">#77FF77</color>
-    <color name="yellow">#FFFF77</color>
-    <color name="pink">#FF77FF</color>
-    <color name="cyan">#77FFFF</color>
+    <color name="brown">#7A5B3E</color>
+    <color name="quasiWhite">#FAFAFA</color>
+    <color name="orange">#FA4B00</color>
+    <color name="beige">#CDBDAE</color>
+    <color name="quasiBlack">#1F1F1F</color>
+    <color name="ref">#991404</color>
+
+    <color name="transbrown">#887A5B3E</color>
+    <color name="transquasiWhite">#88FAFAFA</color>
+    <color name="transorange">#88FA4B00</color>
+    <color name="transbeige">#88CDBDAE</color>
+    <color name="transquasiBlack">#881F1F1F</color>
+    <color name="transref">#88991404</color>
+    <color name="transquasibei">#88e3a56b</color>
 </resources>

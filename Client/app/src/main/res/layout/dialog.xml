@@ -3,8 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
->
+    android:layout_height="match_parent">
     <LinearLayout
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
@@ -12,8 +11,8 @@
         android:orientation="vertical"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@drawable/round_border_frame_red"
-        android:paddingBottom="10dp">
+        android:paddingBottom="10dp"
+        android:layout_marginBottom="25dp">
     <TextView
         android:id="@+id/userName"
         android:layout_width="250dp"
@@ -40,6 +39,7 @@
         android:layout_height="wrap_content"
         android:textColor="@color/black"
         android:gravity="center"
+        android:paddingStart="10dp"
         app:layout_constraintBottom_toBottomOf="@id/userName"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

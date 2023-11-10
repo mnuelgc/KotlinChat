@@ -23,8 +23,8 @@
         android:layout_marginTop="50dp"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        android:backgroundTint="@color/blue"
-        android:textColor="@color/black"
+        android:backgroundTint="@color/quasiBlack"
+        android:textColor="@color/beige"
         android:textStyle="bold"
         android:textSize="30sp"
         android:layout_weight="1"/>
@@ -39,12 +39,30 @@
         android:layout_marginBottom="50dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        android:backgroundTint="@color/yellow"
-        android:textColor="@color/black"
+        android:backgroundTint="@color/quasiBlack"
+        android:textColor="@color/beige"
         android:textStyle="bold"
         android:textSize="30sp"
         android:layout_marginTop="25dp"
         android:layout_weight="1"/>
+
+    <Button
+        android:id="@+id/buttonDisconnect"
+        android:text="Disconnect from server"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toBottomOf="@id/buttonConnect"
+        app:layout_constraintStart_toStartOf="parent"
+        android:backgroundTint="@color/quasiBlack"
+        android:textColor="@color/beige"
+        android:textStyle="bold"
+        android:textSize="30sp"
+        android:layout_weight="1"
+        android:layout_marginStart="50dp"
+        android:layout_marginEnd="50dp"
+        android:layout_marginBottom="50dp"
+        />
+
     </LinearLayout>
 
 

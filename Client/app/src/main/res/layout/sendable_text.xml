@@ -5,10 +5,13 @@
     <EditText android:id="@+id/editText"
         android:layout_width="0dp"
         android:layout_weight="9"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content"
+        android:textColor="@color/quasiBlack"/>
     <Button android:id="@+id/button"
         android:layout_width="0dp"
         android:layout_weight="1.5"
         android:layout_height="wrap_content"
+        android:backgroundTint="@color/quasiBlack"
+        android:textColor="@color/quasiWhite"
         android:text=">"/>
 </LinearLayout>

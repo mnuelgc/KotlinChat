@@ -4,7 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ConversationActivity">
+    tools:context=".ConversationActivity"
+    android:backgroundTint="@color/quasiWhite">
 
 
     <Button
@@ -14,7 +15,8 @@
         android:text="Disconnect"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        tools:layout_editor_absoluteY="183dp" />
+        tools:layout_editor_absoluteY="183dp"
+        android:backgroundTint="@color/quasiBlack"/>
 
     <es.ua.eps.clientserver.ChatSpaceView
         android:id="@+id/chatSpace"

@@ -20,6 +20,8 @@ class HomeActivity : AppCompatActivity() {
 
     lateinit var buttonCreate: Button
     lateinit var buttonJoin: Button
+    lateinit var buttonDisconnet: Button
+
 
     var askChatRoomsCorroutine: Job? = null
 
@@ -32,10 +34,12 @@ class HomeActivity : AppCompatActivity() {
 
         buttonCreate = viewBinding.buttonCreate
         buttonJoin = viewBinding.buttonJoin
+        buttonDisconnet = viewBinding.buttonDisconnect
+
 
         buttonCreate.setOnClickListener {
-                val intentCreateChatRoom = Intent(this@HomeActivity, CreateChatRoomActivity::class.java)
-                startActivity(intentCreateChatRoom)
+            val intentCreateChatRoom = Intent(this@HomeActivity, CreateChatRoomActivity::class.java)
+            startActivity(intentCreateChatRoom)
         }
 
         buttonJoin.setOnClickListener {
@@ -47,29 +51,37 @@ class HomeActivity : AppCompatActivity() {
                 SystemClient.setRootView(viewBinding.root)
                 askChatRoomsCorroutine!!.join()
                 withContext(Dispatchers.IO) {
-                    while (SystemChatRoomList.mutableMap.count() == 0){}
+                    while (SystemChatRoomList.mutableMap.count() == 0) {
+                    }
                 }
 
                 val intentOpenChat =
                     Intent(this@HomeActivity, ChatRoomListActivity::class.java)
                 startActivity(intentOpenChat)
             }
-            /*
-            var joined: Boolean
-            joined = false
-            joinChatCorroutine = lifecycleScope.launch(Dispatchers.IO) {
-                joined = SystemClient.joinChatRoom()
-            }
-
-            lifecycleScope.launch(Dispatchers.Main) {
-                joinChatCorroutine!!.join()
-                if (joined) {
-                    val intentOpenChat =
-                        Intent(this@HomeActivity, ConversationActivity::class.java)
-                    startActivity(intentOpenChat)
-                }
-            }
-            */
         }
+        buttonDisconnet.setOnClickListener {
+            lifecycleScope.launch(Dispatchers.IO) {
+                SystemClient.closeComunication()
+                finish()
+                //   SystemClient.writeResponse(null,viewBinding.root)
+            }
+        }
+        /*
+        var joined: Boolean
+        joined = false
+        joinChatCorroutine = lifecycleScope.launch(Dispatchers.IO) {
+            joined = SystemClient.joinChatRoom()
+        }
+
+        lifecycleScope.launch(Dispatchers.Main) {
+            joinChatCorroutine!!.join()
+            if (joined) {
+                val intentOpenChat =
+                    Intent(this@HomeActivity, ConversationActivity::class.java)
+                startActivity(intentOpenChat)
+            }
+        }
+        */
     }
 }
