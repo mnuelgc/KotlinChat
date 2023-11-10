@@ -13,6 +13,14 @@ import androidx.constraintlayout.widget.ConstraintSet.PARENT_ID
 import androidx.constraintlayout.widget.ConstraintSet.START
 import androidx.constraintlayout.widget.ConstraintSet.TOP
 
+// la clase ChatSpaceView proporciona una vista desplazable que puede contener y mostrar dinámicamente diálogos (instancias de la clase Dialog).
+// La función appendDialog facilita la adición de nuevos diálogos con ciertas propiedades de diseño.
+// La función privada createDialog se encarga de la creación y configuración básica de un nuevo diálogo.
+
+//    Se define la clase ChatSpaceView que hereda de ScrollView,
+//    Este elemento compuesto se usará para que en la pantalla del chat sea facil añadir dialogos y hacer scroll.
+//    Se declaran las variables constraintLayout, numsOfDialog (número de diálogos) y lastId (último ID de diálogo utilizado).
+//    Se definen tres constructores para la clase, donde initialize() se llama para configurar la vista.
 class ChatSpaceView : ScrollView {
 
     var constraintLayout : ConstraintLayout? = null
@@ -31,7 +39,16 @@ class ChatSpaceView : ScrollView {
     }
 
 
-    //From 0 to Client 1 from server
+    // appendDialog:
+    //    Esta función agrega un nuevo diálogo a la vista.
+    //    Se crea un nuevo Dialog llamando a createDialog y luego se agrega al constraintLayout.
+    //    Se utiliza ConstraintSet para establecer las restricciones del diálogo en el constraintLayout.
+    //    Se ajusta la posición del diálogo según el parámetro from (0 para cliente, 1 para servidor).
+    //    Se ajusta la posición vertical del diálogo en relación con el último diálogo agregado.
+    //    Se establece el color del diálogo según el parámetro color.
+    //    Se establece el nombre del usuario en el diálogo si está presente.
+    //    Se aplican las restricciones al constraintLayout.
+
     public fun appendDialog(message : String, from: Int, color : Int, userName : String?){
         val dialog = createDialog(message, from)
 
@@ -56,11 +73,11 @@ class ChatSpaceView : ScrollView {
         when(color)
         {
             0 -> dialog.changeToRed()
-            1 -> dialog.changeToCyan()
-            2 -> dialog.changeToYellow()
-            3 -> dialog.changeToPink()
-            4 -> dialog.changeToBlue()
-            5 -> dialog.changeToGreen()
+            1 -> dialog.changeToQuasiWhite()
+            2 -> dialog.changeToQuasiBeig()
+            3 -> dialog.changeToBrown()
+            4 -> dialog.changeToBeige()
+            5 -> dialog.changeToOrange()
         }
         if (userName != null)
         {
@@ -71,7 +88,11 @@ class ChatSpaceView : ScrollView {
     }
 
 
-  //From 0 to Client 1 from server
+    //createDialog:
+    //    Esta función privada crea un nuevo Dialog.
+    //    Incrementa numsOfDialog y asigna el nuevo ID al diálogo.
+    //    Establece el texto del diálogo con el mensaje proporcionado.
+
     private fun createDialog(message: String, from : Int) : Dialog
     {
         val dialog = Dialog(this.context)

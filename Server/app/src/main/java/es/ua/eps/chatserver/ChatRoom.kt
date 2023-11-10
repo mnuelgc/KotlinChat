@@ -128,6 +128,7 @@ class ChatRoom {
 
     // dataToTextFormat(): String
     //      Devuelve una representación de texto de los datos de la sala, incluyendo ID, clientes, estado activo y colores disponibles.
+    //      Usando una convencion propia para encadenar texto
     public fun dataToTextFormat(): String {
         var dataToText = ""
 

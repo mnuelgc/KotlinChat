@@ -12,6 +12,9 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+
+// SendableText proporciona una interfaz para que el usuario ingrese mensajes,
+// Los envíe al servidor al hacer clic en un botón y limpie el cuadro de texto después de enviar el mensaje.
 class SendableText : LinearLayout {
 
     var text : EditText? = null
@@ -22,6 +25,15 @@ class SendableText : LinearLayout {
     constructor(ctx: Context, attrs: AttributeSet?, defStyle: Int)
             : super(ctx, attrs, defStyle) {initialize()}
 
+    // Este método se llama desde los constructores y realiza las siguientes acciones:
+    //
+    //    Infla la interfaz de usuario a partir del diseño sendable_text.
+    //    Obtiene referencias a las vistas hijas (EditText y Button).
+    //    Configura un OnClickListener para el botón.
+    //    Dentro del OnClickListener, lanza una tarea en un hilo de fondo (Dispatchers.IO) utilizando GlobalScope.launch.
+    //    En este hilo, se utiliza SystemClient.sendMessageToServer para enviar el contenido del cuadro de texto al servidor.
+    //    Después de enviar el mensaje, se utiliza withContext(Dispatchers.Main) para actualizar la interfaz de usuario en el hilo principal,
+    //    estableciendo el contenido del cuadro de texto a una cadena vacía.
     private fun initialize(){
         // Creamos la interfaz a partir del layout
         val li = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
