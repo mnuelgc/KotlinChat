@@ -49,10 +49,12 @@ class CreateChatRoomActivity : AppCompatActivity() {
 
         // Este bloque de código define el comportamiento cuando se hace clic en el botón de creación de sala.
         buttonCreateRoom.setOnClickListener {
+            var created = false
             // Se inicia una corrutina en el hilo de entrada/salida para crear una nueva sala de chat si el nombre de la sala no está vacío.
             createChatCorroutine = lifecycleScope.launch(Dispatchers.IO) {
                 if (editTextRoomsName.text.toString() != "") {
                     SystemClient.createChatRoom(editTextRoomsName.text.toString())
+                    created = true
                 }
             }
             //    Se lanza otra corrutina en el hilo principal para realizar acciones después de crear la sala de chat.
@@ -61,8 +63,10 @@ class CreateChatRoomActivity : AppCompatActivity() {
             //    Se inicia la actividad de conversación (startActivity(intentOpenChat)).
             lifecycleScope.launch(Dispatchers.Main) {
                 createChatCorroutine!!.join()
-                val intentOpenChat = Intent(this@CreateChatRoomActivity, ConversationActivity::class.java)
-                startActivity(intentOpenChat)
+                if (created){
+                    val intentOpenChat = Intent(this@CreateChatRoomActivity, ConversationActivity::class.java)
+                    startActivity(intentOpenChat)
+                }
             }
         }
 
