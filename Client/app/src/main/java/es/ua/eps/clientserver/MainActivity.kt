@@ -49,11 +49,10 @@ class MainActivity : AppCompatActivity() {
         editTextPort = viewBinding.editTextPort
 
         buttonConnect = viewBinding.buttonConnect
-        //  buttonDisconnet = viewBinding.buttonDisconnect
 
-        editTextAddress.setText("192.168.1.47")
+        //editTextAddress.setText("192.168.1.47")
         //editTextAddress.setText("172.20.10.5")
-        editTextPort.setText("8080")
+        //editTextPort.setText("8080")
 
         myClient = Client()
 
