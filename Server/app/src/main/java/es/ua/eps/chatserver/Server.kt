@@ -1,6 +1,6 @@
 package es.ua.eps.chatserver
 
-import android.content.Context
+//Importación de las bibliotecas necesarias.
 import android.graphics.Color
 import android.widget.TextView
 import kotlinx.coroutines.Dispatchers
@@ -9,7 +9,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import java.io.IOException
-import java.io.InputStream
 import java.io.OutputStream
 import java.io.PrintWriter
 import java.math.BigInteger
@@ -20,36 +19,50 @@ import java.net.SocketException
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
 
+//Definición de constantes que representan códigos para diferentes operaciones entre el Servidor y el cliente.
+// Constantes referentes a las conexiones.
 const val CONNECT_CODE : Int = 1515
 const val DISCONNECT_CODE: Int = 1616
 
+// Constantes referentes a las salas de crupo (200).
 const val CREATE_CHAT_ROOM_CODE: Int = 2001
 const val JOIN_CHAT_ROOM_CODE: Int = 2002
 const val GO_OUT_CHAT_ROOM_CODE: Int = 2003
 const val ASK_FOR_CHATS_ROOM_CODE : Int = 2004
 const val GIVE_CHATS_ROOM_CODE : Int = 2005
 
+// Constantes referentes a la comunicación (3000).
 const val CLIENT_COMUNICATION_MESSAGE_CODE : Int = 3001
 
+//Declaración de la clase Server con tres propiedades que son las instancias de TextView del layout xml que se ha dado.
 class Server internal constructor(
     val serverIp_text: TextView,
     val serverInfo_text: TextView,
     val serverPort_text: TextView
 ) {
 
+    //Declaración de dos variables miembro de la clase Server para indicar el puerto por el que va la conexión.
+    ///Y si el server está en funcionamiento o no
+
     val SocketServerPORT = 8080
     var serverRunning = false
 
-
+    //Declaración de dos variables miembro de la clase Server estas indica el numero de conexiones, que luego usaremos para dar ids a los clientes.
+    //Y la otra se usará para el log de eventos del server
     var count = 0
     var message: String? = ""
 
+    //Declaramos una coleccion de Salas de Chat y la sala principal que es "Lobby", la sala donde los usuarios entran tras iniciar la sesion
     var salasDeChat = mutableMapOf<Int, ChatRoom>()
     var lobbyRoom = ChatRoom(0, "Lobby")
 
+    //Declaración de una variable miembro de la clase Server que representa el socket del servidor
     private lateinit var serverSocket: ServerSocket
-    public var clients: ArrayList<Socket> = ArrayList<Socket>()
 
+    // initSocket()
+    //    La función comprueba si el servidor ya está en ejecución (serverRunning).
+    //    Dentro de un bloque withContext(Dispatchers.IO), se crea un ServerSocket en el puerto especificado (8080) y se configuran algunas propiedades iniciales.
+    //    Se muestra la dirección IP y el puerto del servidor en las TextView correspondientes en la interfaz de usuario.
     public suspend fun initSocket() {
         if (!serverRunning) {
             try {
@@ -82,6 +95,13 @@ class Server internal constructor(
         }
     }
 
+    // waitConnection()
+    //
+    //    La función espera activamente la conexión de un cliente utilizando serverSocket.accept().
+    //    Se incrementa el contador de clientes conectados y se actualiza el texto en la serverInfo_text.
+    //    Se crea un objeto ClientInServer representando al nuevo cliente.
+    //    El nuevo cliente se agrega a la sala de espera (lobbyRoom).
+    //    Se responde al cliente con información sobre la cantidad de clientes en la sala de espera.
 
     suspend fun waitConnection() {
         try {
@@ -96,28 +116,7 @@ class Server internal constructor(
             }
 
             val client = ClientInServer(count, socket)
-            /*
-                        var salaActual :ChatRoom? = null
-                        if (salasDeChat.count() == 0)
-                        {
-                            salaActual = ChatRoom(0, "Sala de Pepe", client)
-                            salasDeChat[salaActual.getId()] = salaActual
-                        }
-                        else if(salasDeChat.count() == 1) {
-                            if (salasDeChat.get(0)?.getClients()?.count() == 1) {
-                                salaActual = salasDeChat.get(0)
-                                salaActual?.clientGetIn(client)
 
-                            }else{
-                                salaActual = ChatRoom(1, "Sala de Juan", client)
-                                salasDeChat[salaActual.getId()] = salaActual
-                            }
-                        }
-                        else if(salasDeChat.count() == 2) {
-                            salaActual = salasDeChat.get(1)
-                            salaActual?.clientGetIn(client)
-                        }
-            */
             lobbyRoom.clientGetIn(client)
             salasDeChat[0] = lobbyRoom
 
@@ -126,7 +125,6 @@ class Server internal constructor(
             socketServerReply(client, null)
 
             withContext(Dispatchers.Main) {
-                message += clients.count().toString() + "\n"
                 serverInfo_text.text = message
 
             }
@@ -135,6 +133,11 @@ class Server internal constructor(
         }
     }
 
+    // socketServerReply(client: ClientInServer, respon: String?)
+    //
+    //    En función de la respuesta (respon) y el tipo de mensaje, se envía una respuesta al cliente.
+    //    Si la respuesta comienza con GIVE_CHATS_ROOM_CODE, se envía la lista de salas de chat al cliente.
+    //    Si no, se envía la respuesta a todos los clientes en la sala actual del cliente que envió el mensaje, salvo al emisor.
     private suspend fun socketServerReply(
         client: ClientInServer,
         respon: String?
@@ -143,7 +146,6 @@ class Server internal constructor(
         var outputStream: OutputStream
         var msgReply = ""
         if (respon != null) msgReply = "$respon"
-    //    else msgReply = "Estás en la sala $cnt \n"
         try {
             if (respon?.startsWith(CONNECT_CODE.toString())== true) { }
             else if (respon?.startsWith(GIVE_CHATS_ROOM_CODE.toString())== true)
@@ -169,30 +171,21 @@ class Server internal constructor(
                             message += "replayed: $msgReply\n"
                         }
                     }
-                } else {
-                    /*  outputStream = hostThreadSocket.getOutputStream()
-                  val printWriter = PrintWriter(outputStream)
-                  printWriter.write(msgReply)
-                  printWriter.flush()
-
-                  message += "replayed: $msgReply"
-
-                 */
                 }
             }
-
-
         } catch (e: IOException) {
-            // TODO Auto-generated catch block
             e.printStackTrace()
             message += "Something wrong! $e\n"
         }
-
         withContext(Dispatchers.Main) {
             serverInfo_text.text = message
 
         }
     }
+
+    // readMessages()
+    //
+    //    Utiliza un bucle para iterar sobre todas las salas de chat y procesar los mensajes de cada cliente en esas salas.
 
     suspend fun readMessages() {
         withContext(Dispatchers.IO) {
@@ -208,6 +201,9 @@ class Server internal constructor(
         }
     }
 
+    // processMessage(client: ClientInServer, salaActual: ChatRoom?)
+    //
+    //    Procesa los mensajes de un cliente, obteniendo el mensaje del InputStream del cliente y llamando a parseClientMessage para analizar y procesar el mensaje.
     suspend fun processMessage(client: ClientInServer, salaActual: ChatRoom?) {
         val socket = client.getSocket()
         val byteArrayOutputStream = ByteArrayOutputStream(1024)
@@ -238,22 +234,31 @@ class Server internal constructor(
         }
     }
 
+    // connectClient(client: ClientInServer, clientMessage: String)
+    //
+    //    Conecta a un cliente asignándole un nombre basado en el mensaje del cliente.
     suspend fun connectClient(client : ClientInServer, clientMessage : String)
     {
         val clientName = clientMessage.substringAfter(CONNECT_CODE.toString())
         client.setName(clientName)
     }
 
+    // disconnectClient(client: ClientInServer)
+    //
+    //    Desconecta a un cliente actualizando el texto en serverInfo_text.
     suspend fun disconnectClient(client: ClientInServer) {
         withContext(Dispatchers.Main) {
-            message = "Client Log Out"
+            message += "Client Log Out"
             count--
             serverInfo_text.text = message
+            lobbyRoom.clientGoOut(client)
         }
-//        clients.remove(clientSocket)
     }
 
-
+    // parseClientMessage(client: ClientInServer, clientMessage: String)
+    //
+    //    Analiza y procesa el mensaje del cliente llamando a funciones específicas según el tipo de mensaje.
+    //    Puede ser una solicitud de conexión, desconexión, creación de sala, etc.
     suspend fun parseClientMessage(
 
         client: ClientInServer,
@@ -276,13 +281,15 @@ class Server internal constructor(
         }
     }
 
+    // closeServer()
+    //
+    //    Cierra el servidor cerrando el ServerSocket, limpiando las listas de clientes y salas, y actualizando las TextView en la interfaz de usuario.
     fun closeServer() {
         if (serverRunning) {
             try {
 
                 serverRunning = false
                 serverSocket.close()
-                clients.clear()
                 lobbyRoom.wipeRoom()
                 salasDeChat.clear()
 
@@ -296,6 +303,9 @@ class Server internal constructor(
         }
     }
 
+    // createNewChatRoom(client: ClientInServer, clientMessage: String)
+    //
+    //    Crea una nueva sala de chat y despues de eso une al cliente que ha creado la sala a esta y lo desconecta al cliente de la sala de espera.
     private suspend fun createNewChatRoom(client: ClientInServer, clientMessage: String) {
         lobbyRoom.clientGoOut(client)
         salasDeChat[0] = lobbyRoom
@@ -312,6 +322,9 @@ class Server internal constructor(
 
     }
 
+    // joinToChatRoom(client: ClientInServer, clientMessage: String)
+    //
+    //    Permite a un cliente unirse a una sala de chat existente, desconectándolo de la sala de espera.
     private suspend fun joinToChatRoom(client: ClientInServer, clientMessage: String) {
         lobbyRoom.clientGoOut(client)
         salasDeChat[0] = lobbyRoom
@@ -331,6 +344,9 @@ class Server internal constructor(
 
     }
 
+    // goOutChatRoom(client: ClientInServer, clientMessage: String)
+    //
+    //    Permite a un cliente salir de una sala de chat, volviendo a la sala de espera.
     private suspend fun goOutChatRoom(
         client: ClientInServer,
         clientMessage: String
@@ -348,6 +364,9 @@ class Server internal constructor(
         }
     }
 
+    // giveChatRooms(client: ClientInServer, clientMessage: String)
+    //
+    //    Envia la lista de salas de chat al cliente.
     private suspend fun giveChatRooms(
         client: ClientInServer,
         clientMessage: String
@@ -366,6 +385,10 @@ class Server internal constructor(
         socketServerReply(client,  chatsRoomList)
 
     }
+
+    // giveTheMessage(client: ClientInServer, clientMessage: String)
+    //
+    //    Procesa y reenvía mensajes de un cliente a todos los demás clientes en la misma sala.
     private suspend fun giveTheMessage(client: ClientInServer, clientMessage: String)
     {
         // MessageTipo
@@ -379,24 +402,9 @@ class Server internal constructor(
 
     }
 
-    fun getSHA(key: String): String? {
-        try {
-            val md = MessageDigest.getInstance("SHA-256")
-            val messageDigest = md.digest(key.toByteArray())
-            val num = BigInteger(1, messageDigest)
-            var hashText = num.toString(16)
-            while (hashText.length < 32) {
-               // hashText = “0$hashText”
-            }
-            return hashText
-        } catch (ex: NoSuchAlgorithmException) {
-            println("Exception Occured: ${ex.message}")
-            return null
-        }
-    }
-
-
-
+// getIpAddress(): String
+//
+//    Obtiene y devuelve la dirección IP del servidor.
     private fun getIpAddress(): String {
         var ip = ""
 
@@ -422,6 +430,9 @@ class Server internal constructor(
         return ip
     }
 
+    // companion object serverColors
+    //
+    //    Almacena colores del servidor como una lista mutable.
     companion object{
         var serverColors = mutableListOf <Int>()
 

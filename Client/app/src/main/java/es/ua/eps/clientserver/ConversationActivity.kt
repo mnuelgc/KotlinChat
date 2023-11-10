@@ -9,7 +9,9 @@ import androidx.lifecycle.lifecycleScope
 import es.ua.eps.clientserver.databinding.ActivityConversationBinding
 import es.ua.eps.clientserver.databinding.ActivityMainBinding
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class ConversationActivity : AppCompatActivity() {
 
@@ -18,6 +20,9 @@ class ConversationActivity : AppCompatActivity() {
 
     lateinit var buttonDisconnet: Button
     lateinit var chatSpaceView: ChatSpaceView
+
+    var askChatRoomsCorroutine: Job? = null
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,10 +36,20 @@ class ConversationActivity : AppCompatActivity() {
         SystemClient.setRootView(viewBinding.root)
 
         buttonDisconnet.setOnClickListener {
-            lifecycleScope.launch(Dispatchers.IO) {
-                SystemClient.goOutChatRoom()
-                finish()
-            }
+                askChatRoomsCorroutine = lifecycleScope.launch(Dispatchers.IO) {
+                    SystemClient.askForChatRoomList()
+                }
+
+                lifecycleScope.launch(Dispatchers.Main) {
+                    SystemClient.setRootView(viewBinding.root)
+                    askChatRoomsCorroutine!!.join()
+                    withContext(Dispatchers.IO) {
+                        while (SystemChatRoomList.mutableMap.count() == 0) {
+                        }
+                    }
+                    SystemClient.goOutChatRoom()
+                    finish()
+                }
         }
     }
 }

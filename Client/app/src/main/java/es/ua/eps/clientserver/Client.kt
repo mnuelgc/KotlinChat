@@ -126,31 +126,33 @@ class Client() : Serializable {
     }
 
     suspend fun sendMessageToServer(message: String) {
-        if (isConnectedToServer) {
-            if (message.startsWith(ASK_FOR_CHATS_ROOM_CODE.toString())
-                || message.startsWith(CONNECT_CODE.toString())
-                || message.startsWith(DISCONNECT_CODE.toString())
-                || message.startsWith(CREATE_CHAT_ROOM_CODE.toString())
-                || message.startsWith(JOIN_CHAT_ROOM_CODE.toString())
-                || message.startsWith(GO_OUT_CHAT_ROOM_CODE.toString())
-                || message.startsWith(RECIVE_CHATS_ROOM_CODE.toString())
-            ) {
-                val writer: PrintWriter = PrintWriter(socket!!.getOutputStream(), true)
-                writer.println(message)
-                writer.flush()
-            } else {
-                val messageCrypted = encryptMessage(message, "encriptadito")
+        withContext(Dispatchers.IO) {
+            if (isConnectedToServer) {
+                if (message.startsWith(ASK_FOR_CHATS_ROOM_CODE.toString())
+                    || message.startsWith(CONNECT_CODE.toString())
+                    || message.startsWith(DISCONNECT_CODE.toString())
+                    || message.startsWith(CREATE_CHAT_ROOM_CODE.toString())
+                    || message.startsWith(JOIN_CHAT_ROOM_CODE.toString())
+                    || message.startsWith(GO_OUT_CHAT_ROOM_CODE.toString())
+                    || message.startsWith(RECIVE_CHATS_ROOM_CODE.toString())
+                ) {
+                    val writer: PrintWriter = PrintWriter(socket!!.getOutputStream(), true)
+                    writer.println(message)
+                    writer.flush()
+                } else {
+                    val messageCrypted = encryptMessage(message, "encriptadito")
 
-                //val mesageToSend = "$CLIENT_COMUNICATION_MESSAGE_CODE$name~$messageCrypted"
-                val mesageToSend = "$CLIENT_COMUNICATION_MESSAGE_CODE$name~$message"
-                val writer: PrintWriter = PrintWriter(socket!!.getOutputStream(), true)
+                    //val mesageToSend = "$CLIENT_COMUNICATION_MESSAGE_CODE$name~$messageCrypted"
+                    val mesageToSend = "$CLIENT_COMUNICATION_MESSAGE_CODE$name~$message"
+                    val writer: PrintWriter = PrintWriter(socket!!.getOutputStream(), true)
 
-                writer.println(mesageToSend)
-                writer.flush()
-                withContext(Dispatchers.Main) {
-                    val msgproba = decryptMessage(messageCrypted, "encriptadito")
+                    writer.println(mesageToSend)
+                    writer.flush()
+                    withContext(Dispatchers.Main) {
+                        val msgproba = decryptMessage(messageCrypted, "encriptadito")
                         val chatSpaceView = parentView?.findViewById<ChatSpaceView>(R.id.chatSpace)
-                    chatSpaceView?.appendDialog(message, 0, 5, null)
+                        chatSpaceView?.appendDialog(message, 0, 5, null)
+                    }
                 }
             }
         }

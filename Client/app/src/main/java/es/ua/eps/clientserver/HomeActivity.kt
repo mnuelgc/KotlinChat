@@ -36,6 +36,7 @@ class HomeActivity : AppCompatActivity() {
         buttonJoin = viewBinding.buttonJoin
         buttonDisconnet = viewBinding.buttonDisconnect
 
+        SystemChatRoomList.mutableMap.clear()
 
         buttonCreate.setOnClickListener {
             val intentCreateChatRoom = Intent(this@HomeActivity, CreateChatRoomActivity::class.java)

@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
 import android.widget.AdapterView
+import android.widget.Button
 import android.widget.ListView
 import android.widget.TextView
 import androidx.lifecycle.lifecycleScope
@@ -18,6 +19,8 @@ import kotlinx.coroutines.launch
 class ChatRoomListActivity : AppCompatActivity() {
 
     lateinit var viewBinding: ActivityChatRoomListBinding
+    lateinit var buttonGoBack : Button
+
 
     var joinChatCorroutine : Job? = null
 
@@ -29,6 +32,8 @@ class ChatRoomListActivity : AppCompatActivity() {
         setContentView(viewBinding.root)
 
         list = viewBinding.list
+
+        buttonGoBack = viewBinding.buttonBack
 
         val rooms = mutableListOf<String>()
         for (i in 0 ..<SystemChatRoomList.mutableMap.size) { // sumar 1
@@ -57,9 +62,16 @@ class ChatRoomListActivity : AppCompatActivity() {
                 if (joined) {
                     val intentOpenChat =
                         Intent(this@ChatRoomListActivity, ConversationActivity::class.java)
+
+                    SystemChatRoomList.mutableMap.clear()
                     startActivity(intentOpenChat)
                 }
             }
+        }
+
+        buttonGoBack.setOnClickListener{
+            SystemChatRoomList.mutableMap.clear()
+            finish()
         }
     }
 }

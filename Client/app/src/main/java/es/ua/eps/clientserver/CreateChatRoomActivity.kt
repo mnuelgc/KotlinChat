@@ -19,6 +19,7 @@ class CreateChatRoomActivity : AppCompatActivity() {
     lateinit var viewBinding: ActivityCreateChatRoomBinding
 
     lateinit var buttonCreateRoom: Button
+    lateinit var buttonGoBack : Button
 
     lateinit var editTextRoomsName: EditText
 
@@ -31,6 +32,7 @@ class CreateChatRoomActivity : AppCompatActivity() {
         setContentView(viewBinding.root)
 
         buttonCreateRoom = viewBinding.buttonCreateRoom
+        buttonGoBack = viewBinding.buttonBack
 
         editTextRoomsName = viewBinding.editTextRoomsName
 
@@ -46,6 +48,10 @@ class CreateChatRoomActivity : AppCompatActivity() {
                 val intentOpenChat = Intent(this@CreateChatRoomActivity, ConversationActivity::class.java)
                 startActivity(intentOpenChat)
             }
+        }
+
+        buttonGoBack.setOnClickListener{
+            finish()
         }
 
     }
