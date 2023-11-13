@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <stroke android:color="@color/quasiBlack"  android:width="5dp"/>
+    <corners android:radius="20dp"/>
+    <solid android:color="@color/transbeige" />
+
+</shape>
+<!-- elemento drawable que dibuje un marco de 5 dp de grosor, en color azul y con esquinas redondeadas.-->
